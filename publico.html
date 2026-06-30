@@ -1443,41 +1443,7 @@ function exportMap(mode){
 }
 function printImage(url,title){const w=window.open('','_blank');
   if(!w){const a=document.createElement('a');a.href=url;a.download='red_efe_traza.png';a.click();return;}
-  w.document.write('<html><head><title>'+title+'</title><style>@page{size:landscape;margin:8mm}body{margin:0;background:#06121d}img{width:100%}</style></head><body><img src="'+url+'" onload="setTimeout(function(){window.print()},300)"><script>
-/* ===== MODO PÚBLICO: solo mapa + buscador + estado ===== */
-(function(){
-  document.title = 'RED EFE · Consulta de estado';
-  const style = document.createElement('style');
-  style.textContent = `
-    nav.side{display:none!important;}
-    header.top .menutog{display:none!important;}
-    .shell{grid-template-columns:1fr!important;}
-    main#main{margin-left:0!important;}
-    #opbtns .opbtn:not(.pub-keep){display:none!important;}
-    .opbtns label.opbtn{display:none!important;}
-    .ophint{font-size:11.5px;}
-  `;
-  document.head.appendChild(style);
-
-  document.addEventListener('DOMContentLoaded', function(){
-    // Ocultar botón PDF (export queda solo para uso interno)
-    const pdfBtn = document.querySelector('header.top button[onclick="doPDF()"]');
-    if(pdfBtn) pdfBtn.remove();
-
-    // Ocultar botones de edición operativa: Importar OT, Recargar feed (visual), Limpiar
-    document.querySelectorAll('.opbtns .opbtn').forEach(function(b){
-      const txt = (b.textContent||'').trim();
-      if(/Importar OT|Limpiar/i.test(txt)) b.remove();
-      if(/Recargar feed/i.test(txt)){ b.classList.add('pub-keep'); b.style.display=''; }
-    });
-
-    // Forzar siempre la sección "mapa", aunque exista otro hash/estado
-    if (typeof show === 'function') show('mapa');
-  });
-})();
-</script>
-</body>
-</html>');w.document.close();}
+  w.document.write('<html><head><title>'+title+'</title><style>@page{size:landscape;margin:8mm}body{margin:0;background:#06121d}img{width:100%}</style></head><body><img src="'+url+'" onload="setTimeout(function(){window.print()},300)"></body></html>');w.document.close();}
 /* ===================================================== */
 
 
@@ -1891,5 +1857,4 @@ window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.return
 })();
 </script>
 </body>
-
 </html>
