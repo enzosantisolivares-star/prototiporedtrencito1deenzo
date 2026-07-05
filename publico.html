@@ -948,8 +948,9 @@ nav.side{z-index:120}
 .ricon.infra{background:#f5a62322;color:#f5a623}
 .cxpulse.falla{background:#ff3b3b;animation:opPulse 1.5s infinite;--pc:255,59,59}
 .cxpulse.crit1{background:#ff2b2b;animation:opPulse 1.2s infinite;--pc:255,43,43;width:15px;height:15px}
-.cxpulse.crit2{background:#ff8a1e;animation:opPulse 1.7s infinite;--pc:255,138,30}
-.cxpulse.mant{background:#ffd21e;animation:opPulse 2.1s infinite;--pc:255,210,30;width:12px;height:12px}
+.cxpulse.crit2{background:#ff8a1e;border:2px solid #ff2b2b;animation:opPulse 1.6s infinite;--pc:255,80,30;width:15px;height:15px}
+.cxpulse.crit3{background:#ffd21e;animation:opPulse 2s infinite;--pc:255,210,30}
+.cxpulse.mant{background:#ffd21e;border-color:#caa400;width:12px;height:12px;opacity:.9}
 @keyframes opPulse{0%{box-shadow:0 0 0 0 rgba(var(--pc),.7)}70%{box-shadow:0 0 0 12px rgba(var(--pc),0)}100%{box-shadow:0 0 0 0 rgba(var(--pc),0)}}
 .opstate{display:inline-flex;align-items:center;gap:7px;font-family:var(--disp);font-weight:700;font-size:13px;color:var(--sc);
   background:color-mix(in srgb,var(--sc) 16%,transparent);border:1px solid var(--sc);border-radius:8px;padding:5px 11px;margin-top:10px}
@@ -1067,9 +1068,10 @@ function fichaHTML(c){
   const f=(k,v)=>v?`<div class="df"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`:'';
   const tags=cxTags(c);
   const st=statusOf(c);
-  const critC=st.estado==='falla'?(st.crit===1?'#ff2b2b':'#ff8a1e'):null;
+  const critC=st.estado==='falla'?({1:'#ff2b2b',2:'#ff8a1e',3:'#ffd21e'}[st.crit||3]):null;
   const sc=critC||{operativo:'#43d17f',mantencion:'#ffd21e'}[st.estado]||'#7fd3ff';
-  const sl=st.estado==='falla'?(st.crit===1?'En falla · CRÍTICO 1':'En falla'):{operativo:'Operativo',mantencion:'En mantención'}[st.estado]||'Operativo';
+  const critL={1:'CRÍTICO 1',2:'CIRCUITO DE VÍA',3:'FALLA'}[st.crit||3];
+  const sl=st.estado==='falla'?('En falla · '+critL):{operativo:'Operativo',mantencion:'En mantención'}[st.estado]||'Operativo';
   const stateBlock=HAS_STATUS?`<div class="opstate" style="--sc:${sc}"><span class="dotp"></span>${sl}${st.ot?(' · '+esc(st.ot)):''}</div>`:'';
   return `<div class="ch"><button class="x" onclick="closeFicha()">×</button>
     <h4>${esc(c.nombre||c.nombre_libro||'PaN sin nombre')}</h4>
@@ -1086,7 +1088,7 @@ function fichaHTML(c){
 }
 function openFicha(c){
   $('#cxcard').innerHTML=fichaHTML(c);$('#cxcard').classList.add('show');
-  if(c.lat!=null){const s=statusOf(c);const col=s.estado==='falla'?(s.crit===1?'#ff2b2b':'#ff8a1e'):{operativo:'#43d17f',mantencion:'#ffd21e'}[s.estado]||cxColor(c);dropPin(c.lat,c.lng,col);}
+  if(c.lat!=null){const s=statusOf(c);const col=s.estado==='falla'?({1:'#ff2b2b',2:'#ff8a1e',3:'#ffd21e'}[s.crit||3]):{operativo:'#43d17f',mantencion:'#ffd21e'}[s.estado]||cxColor(c);dropPin(c.lat,c.lng,col);}
 }
 function closeFicha(){$('#cxcard').classList.remove('show');if(RMpin){MAP.removeLayer(RMpin);RMpin=null}}
 function setCrumb(id){const c=$('#crumb');
@@ -1159,11 +1161,11 @@ function refreshCx(z){
   const b=MAP.getBounds();
   const named=c=>{const nm=(c.nombre||c.nombre_libro||'').toLowerCase();return nm&&!nm.includes('sin nombre');};
   let list=RMcx.filter(c=>b.contains([c.lat,c.lng]));
-  if(STATUS_FILTER!=='todos')list=list.filter(c=>{const s=statusOf(c);return STATUS_FILTER==='crit1'?(s.estado==='falla'&&s.crit===1):STATUS_FILTER==='falla'?(s.estado==='falla'&&s.crit!==1):s.estado===STATUS_FILTER;});
+  if(STATUS_FILTER!=='todos')list=list.filter(c=>matchFilter(statusOf(c)));
   /* prioridad: fallas/mantención primero, luego cruces con nombre, al final "Sin Nombre" */
   list.sort((a,bb)=>{
     const sa=statusOf(a),sb=statusOf(bb);
-    const w=s=>s.estado==='falla'?(s.crit===1?0:0.4):s.estado==='mantencion'?1:3;
+    const w=s=>s.estado==='falla'?(s.crit===1?0:s.crit===2?0.3:0.6):s.estado==='mantencion'?1:3;
     return (w(sa)+(named(a)?0:0.05))-(w(sb)+(named(bb)?0:0.05));
   });
   /* regula saturación: una sola marca operativa por celda de píxeles (más separación al alejar) */
@@ -1179,7 +1181,7 @@ function refreshCx(z){
       grid[key]=1;
     }
     let m;
-    if(HAS_STATUS&&est==='falla'){const cl=(statusOf(c).crit===1)?'crit1':'crit2';m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="cxpulse '+cl+'"></div>',iconSize:[15,15],iconAnchor:[7.5,7.5]}),zIndexOffset:cl==='crit1'?700:600});}
+    if(HAS_STATUS&&est==='falla'){const cr=statusOf(c).crit||3;const cl='crit'+cr;m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="cxpulse '+cl+'"></div>',iconSize:[15,15],iconAnchor:[7.5,7.5]}),zIndexOffset:cr===1?700:cr===2?650:600});}
     else if(HAS_STATUS&&est==='mantencion')m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="cxpulse mant"></div>',iconSize:[12,12],iconAnchor:[6,6]}),zIndexOffset:400});
     else{const col=HAS_STATUS?'#43d17f':cxColor(c);m=L.circleMarker([c.lat,c.lng],{radius:named(c)?5:4,color:'#06121d',weight:1.3,fillColor:col,fillOpacity:named(c)?1:.82});}
     const stx=HAS_STATUS?(est==='falla'?' · EN FALLA':est==='mantencion'?' · MANTENCIÓN':' · operativo'):'';
@@ -1282,11 +1284,13 @@ function cxKey(c){return normName(c.nombre||c.nombre_libro)+'|'+(c.km||'');}
 function statusOf(c){return STATUS[cxKey(c)]||(c.id&&STATUS['id:'+normName(c.id)])||{estado:'operativo'};}
 function buildCxNameIndex(){const idx={};DATA.cruces.forEach(c=>{[c.nombre,c.nombre_libro].forEach(n=>{const k=normName(n);if(k.length>2)(idx[k]=idx[k]||[]).push(c);});if(c.id)idx['id:'+normName(c.id)]=[c];});return idx;}
 function critLevel(txt){
-  /* 1 = crítico (rojo pulsante): agujas, circuitos de vía, catenaria, fibra óptica
-     2 = otra falla (naranja): confinamiento, riel, barrera, etc. */
+  /* 1 = rojo (aguja, barrera, catenaria, fibra óptica)
+     2 = naranja borde rojo (circuito de vía)
+     3 = amarillo (confinamiento y otras fallas) */
   const t=normName(txt||'');
-  if(/\baguja/.test(t)||/circuito.*via|cdv\b/.test(t)||/catenaria/.test(t)||/fibra.*optica|f\.?o\.?\b/.test(t))return 1;
-  return 2;
+  if(/circuito.*via|\bcdv\b|\bc\.?v\.?\s*[a-z]?\d/.test(t))return 2;
+  if(/\baguja/.test(t)||/barrera/.test(t)||/catenaria/.test(t)||/fibra.*optica|\bf\.?o\.?\b/.test(t))return 1;
+  return 3;
 }
 function deriveEstado(r){
   let e=normName(r.estado||r.status||r.estado_op||'');
@@ -1311,8 +1315,8 @@ function buildPointIndex(){const idx={};const add=(name,obj,kind)=>{const ke=str
 function refreshStatusExtra(){
   if(!LYR.extra)return;LYR.extra.clearLayers();if(!HAS_STATUS)return;
   STATUS_EXTRA.forEach(s=>{
-    if(STATUS_FILTER!=='todos'){const ok=STATUS_FILTER==='crit1'?(s.estado==='falla'&&s.crit===1):STATUS_FILTER==='falla'?(s.estado==='falla'&&s.crit!==1):s.estado===STATUS_FILTER;if(!ok)return;}
-    const cls=s.estado==='mantencion'?'mant':(s.crit===1?'crit1':'crit2');
+    if(STATUS_FILTER!=='todos'&&!matchFilter(s))return;
+    const cls=s.estado==='mantencion'?'mant':('crit'+(s.crit||3));
     const m=L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div class="cxpulse '+cls+'"></div>',iconSize:[14,14],iconAnchor:[7,7]}),zIndexOffset:550});
     m.bindTooltip(esc(s.nombre)+' · '+(s.estado==='falla'?'EN FALLA':'MANTENCIÓN')+(s.ot?(' · '+esc(s.ot)):''),{className:'cx-tip',direction:'top',offset:[0,-8]});
     m.on('click',()=>openFichaExtra(s));LYR.extra.addLayer(m);
@@ -1378,14 +1382,19 @@ function demoStatus(){
 }
 function clearStatus(){STATUS={};HAS_STATUS=false;STATUS_FILTER='todos';$('#opsrc').textContent='por tipo de cruce';
   $$('.opc').forEach(b=>b.classList.toggle('on',b.dataset.f==='todos'));updateStatusCounts();if(MAP)refreshCx(MAP.getZoom());}
+function matchFilter(s){const f=STATUS_FILTER;
+  if(f==='crit1')return s.estado==='falla'&&s.crit===1;
+  if(f==='crit2')return s.estado==='falla'&&s.crit===2;
+  if(f==='falla')return s.estado==='falla'&&(s.crit||3)===3;
+  return s.estado===f;}
 function setStatusFilter(f){STATUS_FILTER=f;$$('.opc').forEach(b=>b.classList.toggle('on',b.dataset.f===f));if(MAP)refreshCx(MAP.getZoom());}
 function updateStatusCounts(){
-  const tot=RMcx.length;let crit1=0,falla=0,mant=0;
-  if(HAS_STATUS){RMcx.forEach(c=>{const s=statusOf(c);if(s.estado==='falla'){if(s.crit===1)crit1++;else falla++;}else if(s.estado==='mantencion')mant++;});
-    (STATUS_EXTRA||[]).forEach(s=>{if(s.estado==='falla'){if(s.crit===1)crit1++;else falla++;}else if(s.estado==='mantencion')mant++;});}
-  const op=HAS_STATUS?Math.max(0,tot-crit1-falla-mant):tot;
+  const tot=RMcx.length;let crit1=0,crit2=0,falla=0,mant=0;
+  const bump=s=>{if(s.estado==='falla'){if(s.crit===1)crit1++;else if(s.crit===2)crit2++;else falla++;}else if(s.estado==='mantencion')mant++;};
+  if(HAS_STATUS){RMcx.forEach(c=>bump(statusOf(c)));(STATUS_EXTRA||[]).forEach(bump);}
+  const op=HAS_STATUS?Math.max(0,tot-crit1-crit2-falla-mant):tot;
   const set=(id,v)=>{const el=$(id);if(el)el.textContent=v;};
-  set('#cnt-todos',tot);set('#cnt-op',HAS_STATUS?op:'—');set('#cnt-crit1',HAS_STATUS?crit1:'—');set('#cnt-falla',HAS_STATUS?falla:'—');set('#cnt-mant',HAS_STATUS?mant:'—');
+  set('#cnt-todos',tot);set('#cnt-op',HAS_STATUS?op:'—');set('#cnt-crit1',HAS_STATUS?crit1:'—');set('#cnt-crit2',HAS_STATUS?crit2:'—');set('#cnt-falla',HAS_STATUS?falla:'—');set('#cnt-mant',HAS_STATUS?mant:'—');
 }
 function connectFeed(url,everyMs){
   if(FEED_TIMER)clearInterval(FEED_TIMER);
@@ -1448,7 +1457,7 @@ function exportMap(mode){
     const lx=W-pad-176,ly=H-pad-92;x.fillStyle='rgba(8,18,30,.82)';x.fillRect(lx,ly,176,84);
     x.strokeStyle='rgba(120,170,210,.25)';x.strokeRect(lx,ly,176,84);
     x.fillStyle='#fff';x.font='700 12px sans-serif';x.fillText(HAS_STATUS?'Estado operativo':'Cruces por tipo',lx+10,ly+18);
-    const leg=HAS_STATUS?[['#43d17f','Operativo'],['#ff2b2b','Crítico 1'],['#ff8a1e','Otra falla'],['#ffd21e','Mantención']]:[['#ffb02e','normal'],['#ff5a52','enclavado'],['#43d17f','autónomo'],['#56b0ff','automatizado']];
+    const leg=HAS_STATUS?[['#43d17f','Operativo'],['#ff2b2b','Crítico 1'],['#ff8a1e','Circuito vía'],['#ffd21e','Otra falla / Mant.']]:[['#ffb02e','normal'],['#ff5a52','enclavado'],['#43d17f','autónomo'],['#56b0ff','automatizado']];
     leg.slice(0,4).forEach((it,i)=>{const yy=ly+34+i*15;x.fillStyle=it[0];x.beginPath();x.arc(lx+15,yy-4,4,0,7);x.fill();x.fillStyle='#cfe0ee';x.font='500 11px sans-serif';x.fillText(it[1],lx+26,yy);});}
   x.fillStyle='#fff';x.font='700 28px sans-serif';x.fillText('RED EFE INTERACTIVA',pad,44);
   x.fillStyle='#9fc2dd';x.font='500 14px sans-serif';
@@ -1708,8 +1717,9 @@ function buildSections(){
           <button class="opc on" data-f="todos" onclick="setStatusFilter('todos')"><i style="background:#7fd3ff"></i>Todos <b id="cnt-todos">—</b></button>
           <button class="opc" data-f="operativo" onclick="setStatusFilter('operativo')"><i style="background:#43d17f"></i>Operativos <b id="cnt-op">—</b></button>
           <button class="opc" data-f="crit1" onclick="setStatusFilter('crit1')"><i style="background:#ff2b2b"></i>Crítico 1 <b id="cnt-crit1">—</b></button>
-          <button class="opc" data-f="falla" onclick="setStatusFilter('falla')"><i style="background:#ff8a1e"></i>Otras fallas <b id="cnt-falla">—</b></button>
-          <button class="opc" data-f="mantencion" onclick="setStatusFilter('mantencion')"><i style="background:#ffd21e"></i>Mantención <b id="cnt-mant">—</b></button>
+          <button class="opc" data-f="crit2" onclick="setStatusFilter('crit2')"><i style="background:#ff8a1e;border:1.5px solid #ff2b2b"></i>Circuito vía <b id="cnt-crit2">—</b></button>
+          <button class="opc" data-f="falla" onclick="setStatusFilter('falla')"><i style="background:#ffd21e"></i>Otras fallas <b id="cnt-falla">—</b></button>
+          <button class="opc" data-f="mantencion" onclick="setStatusFilter('mantencion')"><i style="background:#ffd21e;opacity:.6"></i>Mantención <b id="cnt-mant">—</b></button>
         </div>
         <div class="opbtns">
           <label class="opbtn" title="Cargar órdenes de trabajo exportadas de Fracttal (JSON o CSV)">↑ Importar OT<input type="file" id="otfile" accept=".json,.csv,.txt" hidden onchange="if(this.files[0])importStatusFile(this.files[0])"></label>
