@@ -1106,24 +1106,37 @@ function buildMap(){
   applyMapTheme();
   // líneas
   LYR.lines={};
-  DATA.geo.lines.forEach(L0=>{
+  /* dedup de corredores: si un tramo ya fue pintado por otra línea, no repintarlo.
+     grilla ~35m; se marca por dónde pasa cada línea ya dibujada. */
+  const painted={}; const PGC=0.0003;
+  const cellKey=(la,lo)=>Math.round(la/PGC)+'_'+Math.round(lo/PGC);
+  const markSeg=(sg)=>{for(let i=1;i<sg.length;i++){const a=sg[i-1],b=sg[i];const steps=Math.max(1,Math.round(Math.hypot((b[0]-a[0])/PGC,(b[1]-a[1])/PGC)));for(let t=0;t<=steps;t++){painted[cellKey(a[0]+(b[0]-a[0])*t/steps,a[1]+(b[1]-a[1])*t/steps)]=1;}}};
+  const dedupSeg=(sg)=>{ /* devuelve sub-segmentos cuyos puntos NO están ya pintados */
+    const out=[]; let cur=[];
+    for(const p of sg){const k=cellKey(p[0],p[1]);if(painted[k]){if(cur.length>=2)out.push(cur);cur=[];}else cur.push(p);}
+    if(cur.length>=2)out.push(cur);
+    return out;
+  };
+  /* orden de dibujo: trunk primero (corredor principal), luego el resto */
+  const ordered=[...DATA.geo.lines].sort((a,b)=>(a.id==='trunk'?-1:0)-(b.id==='trunk'?-1:0));
+  ordered.forEach(L0=>{
     const segs=(L0.polysegs&&L0.polysegs.length)?L0.polysegs:((L0.polyline&&L0.polyline.length>=2)?[L0.polyline]:null);
     if(!segs)return;
-    if(L0.id==='trunk'){
-      let main=null;
-      segs.forEach(sg=>{const p=L.polyline(sg,{color:L0.color,weight:3.4,opacity:.92}).addTo(MAP);if(!main)main=p;
-        p.on('click',e=>{const d=e.latlng.lat<-36.6?'sur':'central';flyToDivision(d)});
-        const nos=sg.filter(pt=>pt[0]>=-33.66);if(nos.length>=2)L.polyline(nos,{color:'#9b6dff',weight:4.6,opacity:.95}).addTo(MAP);});
-      LYR.lines[L0.id]=main;
-    }else if(L0.id==='nos'){
-      LYR.lines[L0.id]=null;
-    }else{
-      const col=L0.color;let first=null;
-      segs.forEach(sg=>{const pl=L.polyline(sg,{color:col,weight:2.8,opacity:.9}).addTo(MAP);if(!first)first=pl;
+    if(L0.id==='nos'){LYR.lines[L0.id]=null;return;}   /* va sobre el tronco, no duplicar */
+    const isTrunk=L0.id==='trunk';
+    const col=L0.color, w=isTrunk?2.6:2.2, op=isTrunk?.85:.8;
+    let first=null;
+    segs.forEach(sg=>{
+      const parts=isTrunk?[sg]:dedupSeg(sg);  /* trunk se pinta entero; el resto solo lo no repetido */
+      parts.forEach(pp=>{
+        const pl=L.polyline(pp,{color:col,weight:w,opacity:op}).addTo(MAP);
+        if(!first)first=pl;
         if(L0.subnombre)pl.bindTooltip(esc(L0.subnombre),{sticky:true,className:'cx-tip'});
-        pl.on('click',()=>flyToDivision(L0.div));});
-      LYR.lines[L0.id]=first;
-    }
+        pl.on('click',e=>{if(isTrunk){const dv=e.latlng.lat<-36.6?'sur':'central';flyToDivision(dv);}else flyToDivision(L0.div);});
+      });
+      markSeg(sg);  /* marcar todo el corredor de esta línea como pintado */
+    });
+    LYR.lines[L0.id]=first;
   });
   // estaciones
   LYR.stnMajor=L.layerGroup();LYR.stnMinor=L.layerGroup();
