@@ -1357,12 +1357,37 @@ function applyFracttalStatuses(rows,reset){
   HAS_STATUS=true;updateStatusCounts();if(MAP){refreshCx(MAP.getZoom());refreshStatusExtra();}
   return applied;
 }
+function parseCSVLine(line,sep){
+  const out=[];let cur='';let q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(q){
+      if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; }
+      else cur+=ch;
+    }else{
+      if(ch==='"')q=true;
+      else if(ch===sep){out.push(cur);cur='';}
+      else cur+=ch;
+    }
+  }
+  out.push(cur);return out;
+}
 function parseCSV(txt){
-  const sep=(txt.split('\n')[0].split(';').length>txt.split('\n')[0].split(',').length)?';':',';
-  const lines=txt.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
+  txt=txt.replace(/\r/g,'');
+  const first=txt.split('\n')[0];
+  const sep=(first.split(';').length>first.split(',').length)?';':',';
+  // separar en filas respetando comillas (una fila puede tener saltos de línea dentro de comillas)
+  const rows=[];let cur='';let q=false;
+  for(let i=0;i<txt.length;i++){const ch=txt[i];
+    if(ch==='"'){q=!q;cur+=ch;}
+    else if(ch==='\n'&&!q){rows.push(cur);cur='';}
+    else cur+=ch;
+  }
+  if(cur.trim().length)rows.push(cur);
+  const lines=rows.filter(l=>l.trim().length);
   if(!lines.length)return [];
-  const hdr=lines[0].split(sep).map(h=>normName(h).replace(/\s+/g,'_'));
-  return lines.slice(1).map(l=>{const cells=l.split(sep);const o={};hdr.forEach((h,i)=>o[h]=(cells[i]||'').trim());return o;});
+  const hdr=parseCSVLine(lines[0],sep).map(h=>normName(h).replace(/\s+/g,'_'));
+  return lines.slice(1).map(l=>{const cells=parseCSVLine(l,sep);const o={};hdr.forEach((h,i)=>o[h]=(cells[i]||'').trim());return o;});
 }
 function importStatusFile(file){
   const r=new FileReader();
