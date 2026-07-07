@@ -969,6 +969,9 @@ nav.side{z-index:120}
 .cxpulse.amar{background:rgba(35,74,80,.55);animation:opPulse 2.2s infinite;--pc:35,74,80;width:11px;height:11px}
 .cxpulse.mant{background:#ffd21e;border-color:#caa400;width:12px;height:12px;opacity:.9}
 @keyframes opPulse{0%{box-shadow:0 0 0 0 rgba(var(--pc),.7)}70%{box-shadow:0 0 0 12px rgba(var(--pc),0)}100%{box-shadow:0 0 0 0 rgba(var(--pc),0)}}
+/* confinamiento: reja rota con X (falta/pérdida de confinamiento) */
+.cxfence{width:20px;height:20px;display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55));animation:fenceWarn 1.8s ease-in-out infinite}
+@keyframes fenceWarn{0%,100%{opacity:1}50%{opacity:.6}}
 .leaflet-marker-icon{transition:transform .15s ease}
 .leaflet-marker-icon:hover{transform:scale(1.35);z-index:1000!important}
 .opstate{display:inline-flex;align-items:center;gap:7px;font-family:var(--disp);font-weight:700;font-size:13px;color:var(--sc);
@@ -1066,6 +1069,19 @@ function cxTags(c){const t=[];const f=(c.funcionamiento||'').toLowerCase();
   if(/s[ií]/i.test(c.automatizado))t.push(['AUTOMATIZADO','#56b0ff']);if(/s[ií]/i.test(c.camara))t.push(['CÁMARA','#c4a0ff']);
   return t;}
 function pinSVG(col){return '<svg class="pin" width="32" height="42" viewBox="0 0 30 40"><path d="M15 39C15 39 27 24 27 14A12 12 0 1 0 3 14C3 24 15 39 15 39Z" fill="'+col+'" stroke="#fff" stroke-width="2.2"/><circle cx="15" cy="14" r="4.6" fill="#fff"/></svg>';}
+/* icono según criticidad: confinamiento = reja rota con X; resto = punto pulsante .cxpulse */
+function fenceSVG(){return '<svg class="cxfence" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">'
+  +'<g stroke="#c9a6f0" stroke-width="1.6" stroke-linecap="round">'
+  +'<line x1="4" y1="4" x2="4" y2="20"/><line x1="9" y1="4" x2="9" y2="20"/>'
+  +'<line x1="15" y1="4" x2="15" y2="12"/>'  /* poste roto (corto) */
+  +'<line x1="20" y1="8" x2="20" y2="20"/>'  /* poste caído/desplazado */
+  +'<line x1="2" y1="9" x2="12" y2="9"/>'
+  +'<line x1="2" y1="15" x2="10" y2="15"/>'  /* travesaño roto, no llega */
+  +'</g>'
+  +'<g stroke="#ff4d4d" stroke-width="2.2" stroke-linecap="round"><line x1="13.5" y1="13.5" x2="22.5" y2="22.5"/><line x1="22.5" y1="13.5" x2="13.5" y2="22.5"/></g>'
+  +'</svg>';}
+function critIconHTML(cl){return cl==='confin'?fenceSVG():'<div class="cxpulse '+cl+'"></div>';}
+function critIconSize(cl){return cl==='confin'?[22,22]:[15,15];}
 function dropPin(lat,lng,color){ if(RMpin)MAP.removeLayer(RMpin);
   RMpin=L.marker([lat,lng],{interactive:false,zIndexOffset:1500,icon:L.divIcon({className:'',
     html:'<div class="geopin"><span class="ripple"></span><span class="ripple r2"></span>'+pinSVG(color)+'</div>',
@@ -1214,7 +1230,7 @@ function refreshCx(z){
       grid[key]=1;
     }
     let m;
-    if(HAS_STATUS&&est==='falla'){const cl=statusOf(c).crit||'amar';m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="cxpulse '+cl+'"></div>',iconSize:[15,15],iconAnchor:[7.5,7.5]}),zIndexOffset:cl==='roja'?700:cl==='caten'?680:cl==='confin'?660:600});}
+    if(HAS_STATUS&&est==='falla'){const cl=statusOf(c).crit||'amar';const isz=critIconSize(cl);m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:critIconHTML(cl),iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:cl==='roja'?700:cl==='caten'?680:cl==='confin'?660:600});}
     else if(HAS_STATUS&&est==='mantencion')m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="cxpulse mant"></div>',iconSize:[12,12],iconAnchor:[6,6]}),zIndexOffset:400});
     else{const col=HAS_STATUS?'#43d17f':cxColor(c);m=L.circleMarker([c.lat,c.lng],{radius:named(c)?5:4,color:'#06121d',weight:1.3,fillColor:col,fillOpacity:named(c)?1:.82});}
     const stx=HAS_STATUS?(est==='falla'?' · EN FALLA':est==='mantencion'?' · MANTENCIÓN':' · operativo'):'';
@@ -1318,14 +1334,20 @@ function cxKey(c){return normName(c.nombre||c.nombre_libro)+'|'+(c.km||'');}
 function statusOf(c){return STATUS[cxKey(c)]||(c.id&&STATUS['id:'+normName(c.id)])||{estado:'operativo'};}
 function buildCxNameIndex(){const idx={};DATA.cruces.forEach(c=>{[c.nombre,c.nombre_libro].forEach(n=>{const k=normName(n);if(k.length>2)(idx[k]=idx[k]||[]).push(c);});if(c.id)idx['id:'+normName(c.id)]=[c];});return idx;}
 function critLevel(txt){
-  /* 'roja'   = aguja, barrera (rojo intenso)
-     'caten'  = catenaria + fibra óptica (amarillo flúor)
-     'confin' = confinamiento (morado oscuro)
-     'amar'   = otras fallas (petróleo translúcido) */
+  /* 'roja'   = aguja (incl. AG), barrera (incl. PLUMA) (rojo intenso)
+     'caten'  = catenaria + fibra óptica + pantógrafo/enredo de pantógrafo (amarillo flúor)
+     'confin' = confinamiento (morado oscuro, marcador de reja rota)
+     'amar'   = otras fallas: circuito de vía (CV), riel, panel... (petróleo translúcido)
+     Nota: "Descomprobando" es un estado de avería (de aguja, barrera o CV);
+     no define la categoría por sí solo, se resuelve por el elemento nombrado. */
   const t=normName(txt||'');
-  if(/catenaria/.test(t)||/fibra.*optica|\bfo[as]?\b|\bf\.?o\.?\b/.test(t))return 'caten';
+  // catenaria: incluye pantógrafo y "enredo de pantógrafo" (parte de la catenaria)
+  if(/catenaria/.test(t)||/pantografo|pantografos|enredo/.test(t)||/fibra.*optica|\bfo[as]?\b|\bf\.?o\.?\b/.test(t))return 'caten';
   if(/confinamiento|malla/.test(t))return 'confin';
-  if(/\baguja/.test(t)||/barrera/.test(t))return 'roja';
+  // aguja: palabra completa o abreviatura AG (como token, evita falsos positivos de "ag" dentro de palabras)
+  if(/\baguja/.test(t)||/\bag\b|\bag\d|\bag[-_]/.test(t))return 'roja';
+  // barrera: incluye "pluma" como sinónimo
+  if(/barrera|\bpluma\b/.test(t))return 'roja';
   return 'amar';
 }
 function deriveEstado(r){
@@ -1353,7 +1375,8 @@ function refreshStatusExtra(){
   STATUS_EXTRA.forEach(s=>{
     if(STATUS_FILTER!=='todos'&&!matchFilter(s))return;
     const cls=s.estado==='mantencion'?'mant':(s.crit||'amar');
-    const m=L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div class="cxpulse '+cls+'"></div>',iconSize:[14,14],iconAnchor:[7,7]}),zIndexOffset:550});
+    const isz=critIconSize(cls);
+    const m=L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:cls==='mant'?'<div class="cxpulse mant"></div>':critIconHTML(cls),iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:550});
     m.bindTooltip(esc(s.nombre)+' · '+(s.estado==='falla'?'EN FALLA':'MANTENCIÓN')+(s.ot?(' · '+esc(s.ot)):''),{className:'cx-tip',direction:'top',offset:[0,-8]});
     m.on('click',()=>openFichaExtra(s));LYR.extra.addLayer(m);
   });}
@@ -1776,7 +1799,7 @@ function buildSections(){
           <button class="opc" data-f="operativo" onclick="setStatusFilter('operativo')"><i style="background:#43d17f"></i>Operativos <b id="cnt-op">—</b></button>
           <button class="opc" data-f="roja" onclick="setStatusFilter('roja')"><i style="background:#ff0000"></i>Críticas <b id="cnt-roja">—</b></button>
           <button class="opc" data-f="caten" onclick="setStatusFilter('caten')"><i style="background:#eaff00"></i>Catenaria/FO <b id="cnt-caten">—</b></button>
-          <button class="opc" data-f="confin" onclick="setStatusFilter('confin')"><i style="background:#5a2d82"></i>Confinamiento <b id="cnt-confin">—</b></button>
+          <button class="opc" data-f="confin" onclick="setStatusFilter('confin')"><i style="background:#5a2d82;border-radius:2px;position:relative" title="reja/confinamiento"></i>Confinamiento <b id="cnt-confin">—</b></button>
           <button class="opc" data-f="falla" onclick="setStatusFilter('falla')"><i style="background:#234a50"></i>Otras fallas <b id="cnt-falla">—</b></button>
           <button class="opc" data-f="mantencion" onclick="setStatusFilter('mantencion')"><i style="background:#ffd21e;opacity:.6"></i>Mantención <b id="cnt-mant">—</b></button>
         </div>
