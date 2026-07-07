@@ -1089,10 +1089,11 @@ function _hav(a,b){const p1=a[0]*Math.PI/180,p2=b[0]*Math.PI/180,dp=(b[0]-a[0])*
   const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return 2*_R_EARTH*Math.asin(Math.sqrt(x));}
 /* anclas de km por línea: estaciones (con km+coord). Respaldo: cruces si faltan estaciones. */
 function _lineAnchors(L){if(L._anch!==undefined)return L._anch;const kmv=x=>{const v=parseFloat(String(x).replace(',','.'));return isNaN(v)?null:v;};
-  let a=[];(L.stations||[]).forEach(s=>{const km=kmv(s.km!=null?s.km:s.pk);if(km!=null&&s.lat!=null)a.push([km,s.lat,s.lng]);});
-  if(a.length<2){(DATA.cruces||[]).forEach(c=>{if(c.line!==L.id||c.lat==null)return;const km=kmv(c.km);if(km!=null)a.push([km,c.lat,c.lng]);});}
-  a.sort((x,y)=>x[0]-y[0]);
-  const u=[];for(const p of a){if(u.length&&Math.abs(p[0]-u[u.length-1][0])<1e-6)continue;u.push(p);}
+  let a=[];
+  (L.stations||[]).forEach(s=>{const km=kmv(s.km!=null?s.km:s.pk);if(km!=null&&s.lat!=null)a.push([km,s.lat,s.lng,0]);});
+  (DATA.cruces||[]).forEach(c=>{if(c.line!==L.id||c.lat==null)return;const km=kmv(c.km);if(km!=null)a.push([km,c.lat,c.lng,1]);});
+  a.sort((x,y)=>x[0]-y[0]||x[3]-y[3]);
+  const u=[];for(const p of a){if(u.length&&Math.abs(p[0]-u[u.length-1][0])<0.02)continue;u.push([p[0],p[1],p[2]]);}  // dedup por km (<20 m), estación gana al cruce
   return (L._anch=u.length>=2?u:null);}
 /* punto sobre la vía más cercano a (lat,lng), usando los vértices de la polyline (robusto al desorden) */
 function _snapToLine(L,lat,lng){const pl=L.polyline||[];if(!pl.length)return [lat,lng];let best=null,bd=1e18;
@@ -1337,9 +1338,9 @@ function buildSearch(){
   function run(){
     const q=normName(inp.value).trim();if(!q){res.classList.remove('show');cur=[];return}
     // búsqueda por PK / km: "pk 33.19", "km 82", o un número suelto -> por cercanía de kilómetro
-    const pkm=q.match(/^(?:pk|km)\s*(\d+(?:[.,]\d+)?)$/)||q.match(/^(\d+(?:[.,]\d+)?)$/);
+    const pkm=q.match(/^(?:pk|km)\s*(\d+(?:[.,\/]\d+)?)$/)||q.match(/^(\d+(?:[.,\/]\d+)?)$/);
     if(pkm){
-      const target=parseFloat(pkm[1].replace(',','.'));
+      const target=parseFloat(pkm[1].replace(/[,\/]/g,'.'));
       cur=items.filter(it=>it.kmNum!=null).map(it=>{
         const unnamed=/sin nombre/.test(normName(it.nm));
         it._d=Math.abs(it.kmNum-target)+(unnamed?0.4:0);  /* leve penalización a los sin nombre */
@@ -1406,7 +1407,7 @@ function deriveEstado(r){
   return 'falla';
 }
 function stripPrefix(n,keepNum){const b=normName(n).replace(/^(pan|paso a nivel|paso|cruce|est\.?|estacion|s\/?e|se|lt|local tecnico|subestacion)\s+/,'').replace(/\s+(pk|km)\s*[\d.,\/-]+.*$/,'');return (keepNum?b:b.replace(/\s+\d+$/,'')).trim();}
-function parsePK(s){const m=String(s).match(/(?:pk|km)\s*(\d+(?:[.,]\d+)?)/i);return m?parseFloat(m[1].replace(',','.')):null;}
+function parsePK(s){const m=String(s).match(/(?:pk|km)\s*(\d+(?:[.,\/]\d+)?)/i);return m?parseFloat(m[1].replace(/[,\/]/g,'.')):null;}
 function matchKeys(raw){const out=[];const push=k=>{if(k&&k.length>2&&out.indexOf(k)<0)out.push(k)};const parts=String(raw).split(/\s*[-\u2013]\s*/);push(stripPrefix(raw,true));if(parts.length>1)parts.forEach(p=>push(stripPrefix(p,true)));push(stripPrefix(raw));if(parts.length>1)parts.forEach(p=>push(stripPrefix(p)));return out;}
 function buildPointIndex(){const idx={};const STOP={'de':1,'del':1,'la':1,'el':1,'los':1,'las':1,'san':1,'santa':1,'calle':1,'paso':1,'nivel':1,'linea':1,'km':1,'pk':1};
   const add=(name,obj,kind,line)=>{const ke=stripPrefix(name,true),kl=stripPrefix(name);
@@ -1430,11 +1431,16 @@ function lineFromRow(r){
 }
 function refreshStatusExtra(){
   if(!LYR.extra)return;LYR.extra.clearLayers();if(!HAS_STATUS)return;
+  const seen={};  // para separar fallas que caen en el mismo punto
   STATUS_EXTRA.forEach(s=>{
     if(STATUS_FILTER!=='todos'&&!matchFilter(s))return;
     const cls=s.estado==='mantencion'?'mant':(s.crit||'amar');
     const isz=critIconSize(cls);
-    const m=L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:cls==='mant'?'<div class="cxpulse mant"></div>':critIconHTML(cls),iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:550});
+    let lat=s.lat,lng=s.lng;
+    const key=lat.toFixed(5)+','+lng.toFixed(5);
+    const n=seen[key]||0;seen[key]=n+1;
+    if(n>0){const ang=n*2.399963,r=0.00012*Math.ceil(n/6);lat+=r*Math.cos(ang);lng+=r*Math.sin(ang);}  // espiral pequeña
+    const m=L.marker([lat,lng],{icon:L.divIcon({className:'',html:cls==='mant'?'<div class="cxpulse mant"></div>':critIconHTML(cls),iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:550});
     m.bindTooltip(esc(s.nombre)+(s.pkExact&&s.km!=null?(' · PK '+esc(s.km)):'')+' · '+(s.estado==='falla'?'EN FALLA':'MANTENCIÓN')+(s.ot?(' · '+esc(s.ot)):''),{className:'cx-tip',direction:'top',offset:[0,-8]});
     m.on('click',()=>openFichaExtra(s));LYR.extra.addLayer(m);
   });}
@@ -1474,9 +1480,9 @@ function applyFracttalStatuses(rows,reset){
       }
       if(!lineId)lineId=lineFromRow(r);
       if(lineId){
-        // si el punto que mejor coincide está en el km del PK (±1), usar sus coordenadas reales (más preciso)
+        // si el punto que mejor coincide está prácticamente en el km del PK (±0.12), usar sus coords reales; si no, interpolar al PK exacto
         const bk=bestHit?parseFloat(String(bestHit.obj.km||bestHit.obj.pk).replace(',','.')):NaN;
-        let p=(bestHit&&!isNaN(bk)&&Math.abs(bk-pk)<=1&&bestHit.obj.lat!=null)?[bestHit.obj.lat,bestHit.obj.lng]:pkToLatLng(lineId,pk);
+        let p=(bestHit&&!isNaN(bk)&&Math.abs(bk-pk)<=0.12&&bestHit.obj.lat!=null)?[bestHit.obj.lat,bestHit.obj.lng]:pkToLatLng(lineId,pk);
         if(p){
           const near=(bestHit?(bestHit.obj.nombre||bestHit.obj.nombre_libro):(hits&&hits.length?(hits[0].obj.nombre||hits[0].obj.nombre_libro):''))||'';
           STATUS_EXTRA.push(Object.assign({lat:p[0],lng:p[1],nombre:raw,km:pk,line:lineId,pkExact:true,ref:near},meta));
