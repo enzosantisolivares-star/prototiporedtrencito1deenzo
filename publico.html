@@ -1082,6 +1082,29 @@ function fenceSVG(){return '<svg class="cxfence" viewBox="0 0 24 24" xmlns="http
   +'</svg>';}
 function critIconHTML(cl){return cl==='confin'?fenceSVG():'<div class="cxpulse '+cl+'"></div>';}
 function critIconSize(cl){return cl==='confin'?[22,22]:[15,15];}
+/* ---- ubicación por PK exacto: interpola un kilómetro sobre la línea ---- */
+const _R_EARTH=6371000;
+function _hav(a,b){const p1=a[0]*Math.PI/180,p2=b[0]*Math.PI/180,dp=(b[0]-a[0])*Math.PI/180,dl=(b[1]-a[1])*Math.PI/180;
+  const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return 2*_R_EARTH*Math.asin(Math.sqrt(x));}
+/* anclas de km por línea: estaciones (con km+coord). Respaldo: cruces si faltan estaciones. */
+function _lineAnchors(L){if(L._anch!==undefined)return L._anch;const kmv=x=>{const v=parseFloat(String(x).replace(',','.'));return isNaN(v)?null:v;};
+  let a=[];(L.stations||[]).forEach(s=>{const km=kmv(s.km!=null?s.km:s.pk);if(km!=null&&s.lat!=null)a.push([km,s.lat,s.lng]);});
+  if(a.length<2){(DATA.cruces||[]).forEach(c=>{if(c.line!==L.id||c.lat==null)return;const km=kmv(c.km);if(km!=null)a.push([km,c.lat,c.lng]);});}
+  a.sort((x,y)=>x[0]-y[0]);
+  const u=[];for(const p of a){if(u.length&&Math.abs(p[0]-u[u.length-1][0])<1e-6)continue;u.push(p);}
+  return (L._anch=u.length>=2?u:null);}
+/* punto sobre la vía más cercano a (lat,lng), usando los vértices de la polyline (robusto al desorden) */
+function _snapToLine(L,lat,lng){const pl=L.polyline||[];if(!pl.length)return [lat,lng];let best=null,bd=1e18;
+  for(let i=0;i<pl.length;i++){const d=_hav([lat,lng],pl[i]);if(d<bd){bd=d;best=pl[i];}}
+  return best?[best[0],best[1]]:[lat,lng];}
+function pkToLatLng(lineId,pk){if(pk==null)return null;const L=DATA.geo.lines.find(x=>x.id===lineId);if(!L)return null;
+  const A=_lineAnchors(L);if(!A)return null;
+  let i=1;while(i<A.length&&A[i][0]<pk)i++;   // A[i-1][0] <= pk <= A[i][0] (o extremos)
+  if(i>=A.length)i=A.length-1;
+  const k0=A[i-1][0],k1=A[i][0];const t=k1===k0?0:(pk-k0)/(k1-k0);
+  const lat=A[i-1][1]+(A[i][1]-A[i-1][1])*t, lng=A[i-1][2]+(A[i][2]-A[i-1][2])*t;
+  const sn=_snapToLine(L,lat,lng);
+  return (_hav([lat,lng],sn)<800)?sn:[lat,lng];}  // pega al riel solo si está cerca
 function dropPin(lat,lng,color){ if(RMpin)MAP.removeLayer(RMpin);
   RMpin=L.marker([lat,lng],{interactive:false,zIndexOffset:1500,icon:L.divIcon({className:'',
     html:'<div class="geopin"><span class="ripple"></span><span class="ripple r2"></span>'+pinSVG(color)+'</div>',
@@ -1293,13 +1316,13 @@ function buildSearch(){
   const items=[];
   RMcx.forEach(c=>items.push({type:'cruce',c,lat:c.lat,lng:c.lng,nm:c.nombre||c.nombre_libro||'PaN sin nombre',pk:c.km,
     sub:(c.red||'')+(c.subdivision?(' · Subdiv. '+c.subdivision):''),
-    key:normName('pan pa-n cruce paso a nivel '+(c.nombre||'')+' '+(c.nombre_libro||'')+' '+(c.km||'')+' '+(c.subdivision||'')+' '+(c.red||''))}));
+    key:normName('pan pa-n cruce paso a nivel pk km '+(c.nombre||'')+' '+(c.nombre_libro||'')+' '+(c.km||'')+' '+(c.subdivision||'')+' '+(c.red||''))}));
   DATA.geo.lines.forEach(L=>L.stations.forEach(st=>{if(st.lat==null)return;
     items.push({type:'est',st,lat:st.lat,lng:st.lng,nm:st.nombre,pk:st.pk,sub:'Estación · '+L.label,
-      key:normName('estacion est estación '+st.nombre+' '+(st.pk||'')+' '+L.label)});}));
+      key:normName('estacion est estación pk km '+st.nombre+' '+(st.pk||'')+' '+L.label)});}));
   INFRA.forEach(e=>{items.push({type:'infra',e,lat:e.lat,lng:e.lng,nm:e.nombre,pk:e.pk,
     sub:(e.se?'Subestación (S/E)':'Local técnico (LT)')+' · '+(e.region==='sur'?'EFE Sur':'EFE Central'),
-    key:normName('subestacion s/e ssee local tecnico lt infraestructura '+e.nombre+' '+(e.pk||''))});});
+    key:normName('subestacion s/e ssee local tecnico lt infraestructura pk km '+e.nombre+' '+(e.pk||''))});});
   let cur=[];
   function run(){
     const q=normName(inp.value).trim();if(!q){res.classList.remove('show');cur=[];return}
@@ -1363,13 +1386,23 @@ function deriveEstado(r){
   return 'falla';
 }
 function stripPrefix(n,keepNum){const b=normName(n).replace(/^(pan|paso a nivel|paso|cruce|est\.?|estacion|s\/?e|se|lt|local tecnico|subestacion)\s+/,'').replace(/\s+(pk|km)\s*[\d.,\/-]+.*$/,'');return (keepNum?b:b.replace(/\s+\d+$/,'')).trim();}
-function parsePK(s){const m=String(s).match(/(?:pk|km)\s*([\d]+)(?:[.,\/]\d+)?/i);return m?parseFloat(m[1]):null;}
+function parsePK(s){const m=String(s).match(/(?:pk|km)\s*(\d+(?:[.,]\d+)?)/i);return m?parseFloat(m[1].replace(',','.')):null;}
 function matchKeys(raw){const out=[];const push=k=>{if(k&&k.length>2&&out.indexOf(k)<0)out.push(k)};const parts=String(raw).split(/\s*[-\u2013]\s*/);push(stripPrefix(raw,true));if(parts.length>1)parts.forEach(p=>push(stripPrefix(p,true)));push(stripPrefix(raw));if(parts.length>1)parts.forEach(p=>push(stripPrefix(p)));return out;}
-function buildPointIndex(){const idx={};const add=(name,obj,kind)=>{const ke=stripPrefix(name,true),kl=stripPrefix(name);if(ke&&ke.length>2)(idx[ke]=idx[ke]||[]).push({obj,kind});if(kl&&kl!==ke&&kl.length>2)(idx[kl]=idx[kl]||[]).push({obj,kind});};
-  DATA.cruces.forEach(c=>{if(c.lat!=null){add(c.nombre,c,'cruce');if(c.nombre_libro)add(c.nombre_libro,c,'cruce');}});
-  DATA.geo.lines.forEach(L=>L.stations.forEach(s=>{if(s.lat!=null)add(s.nombre,s,'est');}));
-  (DATA.ssee_lt||[]).forEach(e=>{if(e.lat!=null)add(e.nombre,e,'infra');});
+function buildPointIndex(){const idx={};const add=(name,obj,kind,line)=>{const ke=stripPrefix(name,true),kl=stripPrefix(name);if(ke&&ke.length>2)(idx[ke]=idx[ke]||[]).push({obj,kind,line});if(kl&&kl!==ke&&kl.length>2)(idx[kl]=idx[kl]||[]).push({obj,kind,line});};
+  DATA.cruces.forEach(c=>{if(c.lat!=null){add(c.nombre,c,'cruce',c.line);if(c.nombre_libro)add(c.nombre_libro,c,'cruce',c.line);}});
+  DATA.geo.lines.forEach(L=>L.stations.forEach(s=>{if(s.lat!=null)add(s.nombre,s,'est',L.id);}));
+  (DATA.ssee_lt||[]).forEach(e=>{if(e.lat!=null)add(e.nombre,e,'infra',e.line||null);});
   return idx;}
+const _LINE_IDS=(DATA.geo.lines||[]).map(L=>L.id);
+function lineFromRow(r){
+  const hay=normName([r.linea,r.line,r.subdivision,r.subdiv,r.sd,r.ramal,r.red,r.tramo].filter(Boolean).join(' '));
+  if(!hay)return null;
+  const m=hay.match(/\bsd\s*0*(\d+)\b/);if(m){const id='sd'+m[1];if(_LINE_IDS.includes(id))return id;}
+  for(const id of _LINE_IDS){if(hay.includes(id))return id;}
+  if(/valpara|merval|puerto.?limache/.test(hay))return _LINE_IDS.includes('valp')?'valp':null;
+  if(/central|lcs|tronc|alameda.?chill/.test(hay))return _LINE_IDS.includes('trunk')?'trunk':null;
+  return null;
+}
 function refreshStatusExtra(){
   if(!LYR.extra)return;LYR.extra.clearLayers();if(!HAS_STATUS)return;
   STATUS_EXTRA.forEach(s=>{
@@ -1377,10 +1410,10 @@ function refreshStatusExtra(){
     const cls=s.estado==='mantencion'?'mant':(s.crit||'amar');
     const isz=critIconSize(cls);
     const m=L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:cls==='mant'?'<div class="cxpulse mant"></div>':critIconHTML(cls),iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:550});
-    m.bindTooltip(esc(s.nombre)+' · '+(s.estado==='falla'?'EN FALLA':'MANTENCIÓN')+(s.ot?(' · '+esc(s.ot)):''),{className:'cx-tip',direction:'top',offset:[0,-8]});
+    m.bindTooltip(esc(s.nombre)+(s.pkExact&&s.km!=null?(' · PK '+esc(s.km)):'')+' · '+(s.estado==='falla'?'EN FALLA':'MANTENCIÓN')+(s.ot?(' · '+esc(s.ot)):''),{className:'cx-tip',direction:'top',offset:[0,-8]});
     m.on('click',()=>openFichaExtra(s));LYR.extra.addLayer(m);
   });}
-function openFichaExtra(s){const pc={nombre:s.nombre,km:s.km||'',lat:s.lat,lng:s.lng,red:s.red||'',_extra:true};STATUS[cxKey(pc)]={estado:s.estado,ot:s.ot,desc:s.desc,prioridad:s.prioridad,fecha:s.fecha,crit:s.crit};openFicha(pc);}
+function openFichaExtra(s){const pc={nombre:s.nombre,km:s.km||'',lat:s.lat,lng:s.lng,red:s.red||'',line:s.line||'',_extra:true};STATUS[cxKey(pc)]={estado:s.estado,ot:s.ot,desc:s.desc,prioridad:s.prioridad,fecha:s.fecha,crit:s.crit,pkExact:s.pkExact,ref:s.ref};openFicha(pc);}
 function applyFracttalStatuses(rows,reset){
   if(reset!==false){STATUS={};STATUS_EXTRA=[];}
   if(!PIDX)PIDX=buildPointIndex();
@@ -1400,6 +1433,31 @@ function applyFracttalStatuses(rows,reset){
         const cand=KS.filter(K=>K.endsWith(' '+k));
         if(cand.length===1){hits=PIDX[cand[0]];break;}
       }}
+    // ---- ubicación por PK exacto (si hay PK y podemos determinar la línea) ----
+    if(pk!=null){
+      let lineId=null;
+      if(hits&&hits.length){
+        const withLine=hits.filter(h=>h.line);
+        if(withLine.length){
+          withLine.sort((a,b)=>{
+            const ka=parseFloat(String(a.obj.km||a.obj.pk).replace(',','.'));
+            const kb=parseFloat(String(b.obj.km||b.obj.pk).replace(',','.'));
+            return Math.abs((isNaN(ka)?1e9:ka)-pk)-Math.abs((isNaN(kb)?1e9:kb)-pk);
+          });
+          lineId=withLine[0].line;
+        }
+      }
+      if(!lineId)lineId=lineFromRow(r);
+      if(lineId){
+        const p=pkToLatLng(lineId,pk);
+        if(p){
+          const near=(hits&&hits.length)?(hits[0].obj.nombre||hits[0].obj.nombre_libro||''):'';
+          STATUS_EXTRA.push(Object.assign({lat:p[0],lng:p[1],nombre:raw,km:pk,line:lineId,pkExact:true,ref:near},meta));
+          applied++;return;
+        }
+      }
+    }
+    // ---- fallback: sin PK ubicable -> se asocia al punto nombrado (como antes) ----
     if(!hits||!hits.length){sinUbic++;return;}
     let targets=hits;
     if(pk!=null&&hits.length>1){const close=hits.filter(h=>Math.abs((parseFloat(String(h.obj.km||h.obj.pk).replace(',','.'))||1e9)-pk)<1.5);if(close.length)targets=close;}
