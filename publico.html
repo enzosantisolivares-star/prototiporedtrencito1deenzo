@@ -982,10 +982,10 @@ nav.side{z-index:120}
 @keyframes rojaRing{0%{width:12px;height:12px;opacity:.9}100%{width:24px;height:24px;opacity:0}}
 @keyframes rojaCore{0%,100%{filter:brightness(1) saturate(1)}50%{filter:brightness(1.35) saturate(1.3)}}
 .cxpulse.caten{background:#eaff00;animation:opPulse 1.5s infinite;--pc:234,255,0;width:11px;height:11px}
-.cxpulse.senal{background:#ff4fa3;animation:opPulse 1.7s infinite;--pc:255,79,163;width:10px;height:10px}
-.cxpulse.confin{background:#5a2d82;animation:opPulse 1.8s infinite;--pc:90,45,130}
-.cxpulse.via{background:#c19a00;animation:opPulse 2s infinite;--pc:193,154,0;width:9px;height:9px}
-.cxpulse.amar{background:#949ca3;animation:opPulse 2.4s infinite;--pc:148,156,163;width:8px;height:8px}
+.cxpulse.senal{background:#ff4fa3;--pc:255,79,163;width:10px;height:10px}
+.cxpulse.confin{background:#5a2d82;--pc:90,45,130}
+.cxpulse.via{background:#c19a00;--pc:193,154,0;width:9px;height:9px}
+.cxpulse.amar{background:#949ca3;--pc:148,156,163;width:8px;height:8px}
 .cxpulse.mant{background:#949ca3;border-color:#dfe4e8;width:8px;height:8px;opacity:.92}
 @keyframes opPulse{0%{box-shadow:0 0 0 0 rgba(var(--pc),.7)}70%{box-shadow:0 0 0 12px rgba(var(--pc),0)}100%{box-shadow:0 0 0 0 rgba(var(--pc),0)}}
 /* confinamiento: reja rota con X (falta/pérdida de confinamiento) */
@@ -1974,8 +1974,6 @@ function buildSections(){
   const m=$('#main');
   // MAPA
   m.insertAdjacentHTML('beforeend',`<section id="sec-mapa" class="sec show">
-    <h2 class="title" style="margin-bottom:4px">Mapa de la red</h2>
-    <p class="lead" style="margin-top:0;margin-bottom:10px">Mapa real de la red. Toca una red, estación o cruce para acercarte; busca por nombre o PK y se ubica con un pin.</p>
     <div class="mapstage" id="mapstage">
       <div id="leafmap"></div>
       <div class="fsexit" onclick="toggleFull(false)">⛶ Salir de pantalla completa · Esc</div>
