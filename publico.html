@@ -1032,8 +1032,8 @@ nav.side{z-index:120}
     <div><h1>RED EFE<span style="color:var(--efe)"> INTERACTIVA</span></h1><small>Mapa ferroviario · cruces, estaciones y estado operativo · por Enzo Santis, Operador Gestión Fallas y Averías</small></div>
   </div>
   <div class="topbtns">
+    <button class="btn sm" id="fullBtn" onclick="toggleFull()" title="Ver mapa en horizontal (pantalla completa)"><svg width="17" height="13" viewBox="0 0 17 13" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1.3" width="15" height="10.4" rx="1.6"/><path d="M4.2 4 L2.4 4 L2.4 5.8 M12.8 9 L14.6 9 L14.6 7.2"/></svg></button>
     <button class="btn sm" id="themeBtn" onclick="toggleTheme()" title="Modo claro/oscuro">◐</button>
-    
   </div>
 </header>
 
@@ -1128,11 +1128,16 @@ function dropPin(lat,lng,color){ if(RMpin)MAP.removeLayer(RMpin);
   RMpin=L.marker([lat,lng],{interactive:false,zIndexOffset:1500,icon:L.divIcon({className:'',
     html:'<div class="geopin"><span class="ripple"></span><span class="ripple r2"></span>'+pinSVG(color)+'</div>',
     iconSize:[34,46],iconAnchor:[17,44]})}).addTo(MAP);}
+function faultsAt(lat,lng){if(!HAS_STATUS||lat==null)return null;const key=lat.toFixed(4)+','+lng.toFixed(4);
+  const fs=(STATUS_EXTRA||[]).filter(s=>s.lat.toFixed(4)+','+s.lng.toFixed(4)===key);
+  return fs.length?{lat:fs[0].lat,lng:fs[0].lng,faults:fs}:null;}
 function gotoCruce(c){ if(c.lat==null){openFicha(c);return;}
   MAP.flyTo([c.lat,c.lng],15,{duration:1.25,easeLinearity:.2});
-  setTimeout(()=>dropPin(c.lat,c.lng,cxColor(c)),60); openFicha(c); }
+  const g=faultsAt(c.lat,c.lng);
+  if(g){openFichaGroup(g);} else {setTimeout(()=>dropPin(c.lat,c.lng,cxColor(c)),60); openFicha(c);} }
 function gotoEst(st){ MAP.flyTo([st.lat,st.lng],13,{duration:1.2,easeLinearity:.2});
-  setTimeout(()=>dropPin(st.lat,st.lng,'#2f8fd6'),60); openStationCard(st); }
+  const g=faultsAt(st.lat,st.lng);
+  if(g){openFichaGroup(g);} else {setTimeout(()=>dropPin(st.lat,st.lng,'#2f8fd6'),60); openStationCard(st);} }
 function openStationCard(st){
   const cod=(DATA.codigos||[]).find(x=>normName(x.estacion)===normName(st.nombre))||{};
   const f=(k,v)=>v?`<div class="df"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`:'';
@@ -1268,7 +1273,7 @@ function refreshCx(z){
     if(!force){
       const p=MAP.latLngToContainerPoint([c.lat,c.lng]);
       const key=Math.round(p.x/cell)+'_'+Math.round(p.y/cell);
-      if(grid[key]&&!(detail&&z>=12.5&&named(c)))continue;
+      if(grid[key]&&!(detail&&named(c)))continue;
       grid[key]=1;
     }
     let m;
@@ -1300,7 +1305,8 @@ function refreshInfra(z){
   });
 }
 function gotoInfra(e){ if(e.lat==null)return; MAP.flyTo([e.lat,e.lng],13,{duration:1.1,easeLinearity:.2});
-  setTimeout(()=>dropPin(e.lat,e.lng,e.se?'#f5a623':'#2bb6ad'),60); openInfra(e); }
+  const g=faultsAt(e.lat,e.lng);
+  if(g){openFichaGroup(g);} else {setTimeout(()=>dropPin(e.lat,e.lng,e.se?'#f5a623':'#2bb6ad'),60); openInfra(e);} }
 function openInfra(e){
   const tipo=(e.se&&e.lt)?'Subestación + Local técnico':e.se?'Subestación eléctrica (S/E)':'Local técnico (LT)';
   const col=e.se?'#f5a623':'#2bb6ad';
@@ -1468,8 +1474,7 @@ function refreshStatusExtra(){
     const g=groups[k];
     let worst=null;g.faults.forEach(s=>{const cl=s.estado==='mantencion'?'mant':(s.crit||'amar');if(worst==null||_CRITRANK[cl]<_CRITRANK[worst])worst=cl;});
     const isz=critIconSize(worst);
-    const badge=g.faults.length>1?'<span class="fbadge">'+g.faults.length+'</span>':'';
-    const m=L.marker([g.lat,g.lng],{icon:L.divIcon({className:'',html:'<div class="cxhit">'+critVisual(worst)+badge+'</div>',iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:550});
+    const m=L.marker([g.lat,g.lng],{icon:L.divIcon({className:'',html:'<div class="cxhit">'+critVisual(worst)+'</div>',iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:550});
     const f0=g.faults[0],ref=f0.ref||f0.nombre;
     const tip=g.faults.length>1?(esc(ref)+' · '+g.faults.length+' averías'):(esc(f0.nombre)+(f0.pkExact&&f0.km!=null&&f0.km!==''?(' · PK '+esc(f0.km)):'')+' · '+(f0.estado==='falla'?'EN FALLA':'MANTENCIÓN')+(f0.ot?(' · '+esc(f0.ot)):''));
     m.bindTooltip(tip,{className:'cx-tip',direction:'top',offset:[0,-8]});
