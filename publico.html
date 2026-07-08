@@ -953,8 +953,18 @@ nav.side{z-index:120}
 .opbtn:hover{border-color:#2f8fd6;color:#fff}
 .ophint{font-size:9.5px;color:#8aa6bd;line-height:1.4}
 .cxpulse{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-sizing:border-box}
-.cxhit{width:100%;height:100%;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cxhit{width:100%;height:100%;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
 .cxhit:hover{transform:scale(1.15)}
+.fbadge{position:absolute;top:-3px;right:-3px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:#fff;color:#0a2236;font-family:var(--disp);font-size:9.5px;font-weight:800;line-height:15px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.favlist{display:flex;flex-direction:column;gap:9px;padding-top:4px}
+.favrow{border-left:3px solid var(--fc);background:color-mix(in srgb,var(--fc) 9%,transparent);border-radius:0 8px 8px 0;padding:8px 11px}
+.favtop{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.favdot{width:9px;height:9px;border-radius:50%;background:var(--fc);flex:none;box-shadow:0 0 6px var(--fc)}
+.favcat{font-family:var(--disp);font-weight:700;font-size:12.5px;color:var(--fc)}
+.favot{margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted)}
+.favpk{font-family:var(--mono);font-size:11px;font-weight:700;color:#7be0a6;margin-top:3px}
+.favdesc{font-size:13px;color:var(--ink);margin-top:4px;line-height:1.35}
+.favmeta{font-size:11px;color:var(--muted);margin-top:2px}
 .infra-se{display:flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:4px;background:rgba(20,32,40,.82);color:#9fd4e8;border:1px solid rgba(120,180,210,.55);box-shadow:0 1px 3px rgba(0,0,0,.4);font:800 8px/1 var(--body)}
 .infra-lt{display:flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:4px;background:rgba(15,34,32,.8);color:#7fd8cf;border:1px solid rgba(90,180,170,.5);box-shadow:0 1px 3px rgba(0,0,0,.4);font:800 7px/1 var(--body)}
 .opinfra{display:flex;gap:5px;margin:6px 0 2px}
@@ -969,7 +979,7 @@ nav.side{z-index:120}
 @keyframes rojaCore{0%,100%{filter:brightness(1) saturate(1)}50%{filter:brightness(1.35) saturate(1.3)}}
 .cxpulse.caten{background:#eaff00;animation:opPulse 1.5s infinite;--pc:234,255,0;width:14px;height:14px}
 .cxpulse.confin{background:#5a2d82;animation:opPulse 1.8s infinite;--pc:90,45,130}
-.cxpulse.amar{background:rgba(35,74,80,.55);animation:opPulse 2.2s infinite;--pc:35,74,80;width:11px;height:11px}
+.cxpulse.amar{background:rgba(138,31,61,.85);animation:opPulse 2.2s infinite;--pc:138,31,61;width:11px;height:11px}
 .cxpulse.mant{background:#ffd21e;border-color:#caa400;width:12px;height:12px;opacity:.9}
 @keyframes opPulse{0%{box-shadow:0 0 0 0 rgba(var(--pc),.7)}70%{box-shadow:0 0 0 12px rgba(var(--pc),0)}100%{box-shadow:0 0 0 0 rgba(var(--pc),0)}}
 /* confinamiento: reja rota con X (falta/pérdida de confinamiento) */
@@ -1083,7 +1093,8 @@ function fenceSVG(){return '<svg class="cxfence" viewBox="0 0 24 24" xmlns="http
   +'</g>'
   +'<g stroke="#ff4d4d" stroke-width="2.2" stroke-linecap="round"><line x1="13.5" y1="13.5" x2="22.5" y2="22.5"/><line x1="22.5" y1="13.5" x2="13.5" y2="22.5"/></g>'
   +'</svg>';}
-function critIconHTML(cl){const inner=cl==='confin'?fenceSVG():'<div class="cxpulse '+cl+'"></div>';return '<div class="cxhit">'+inner+'</div>';}
+function critVisual(cl){return cl==='confin'?fenceSVG():'<div class="cxpulse '+cl+'"></div>';}
+function critIconHTML(cl){return '<div class="cxhit">'+critVisual(cl)+'</div>';}
 function critIconSize(cl){return cl==='confin'?[40,40]:[34,34];}
 /* ---- ubicación por PK exacto: interpola un kilómetro sobre la línea ---- */
 const _R_EARTH=6371000;
@@ -1134,7 +1145,7 @@ function fichaHTML(c){
   const f=(k,v)=>v?`<div class="df"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`:'';
   const tags=cxTags(c);
   const st=statusOf(c);
-  const critC=st.estado==='falla'?({roja:'#ff0000',caten:'#eaff00',confin:'#5a2d82',amar:'#234a50'}[st.crit||'amar']):null;
+  const critC=st.estado==='falla'?({roja:'#ff0000',caten:'#eaff00',confin:'#5a2d82',amar:'#8a1f3d'}[st.crit||'amar']):null;
   const sc=critC||{operativo:'#43d17f',mantencion:'#ffd21e'}[st.estado]||'#7fd3ff';
   const sl=st.estado==='falla'?'En falla':{operativo:'Operativo',mantencion:'En mantención'}[st.estado]||'Operativo';
   const stateBlock=HAS_STATUS?`<div class="opstate" style="--sc:${sc}"><span class="dotp"></span>${sl}${st.ot?(' · '+esc(st.ot)):''}</div>`:'';
@@ -1153,7 +1164,7 @@ function fichaHTML(c){
 }
 function openFicha(c){
   $('#cxcard').innerHTML=fichaHTML(c);$('#cxcard').classList.add('show');
-  if(c.lat!=null){const s=statusOf(c);const col=s.estado==='falla'?({roja:'#ff0000',caten:'#eaff00',confin:'#5a2d82',amar:'#234a50'}[s.crit||'amar']):{operativo:'#43d17f',mantencion:'#ffd21e'}[s.estado]||cxColor(c);dropPin(c.lat,c.lng,col);}
+  if(c.lat!=null){const s=statusOf(c);const col=s.estado==='falla'?({roja:'#ff0000',caten:'#eaff00',confin:'#5a2d82',amar:'#8a1f3d'}[s.crit||'amar']):{operativo:'#43d17f',mantencion:'#ffd21e'}[s.estado]||cxColor(c);dropPin(c.lat,c.lng,col);}
 }
 function closeFicha(){$('#cxcard').classList.remove('show');if(RMpin){MAP.removeLayer(RMpin);RMpin=null}}
 function setCrumb(id){const c=$('#crumb');
@@ -1197,7 +1208,6 @@ function buildMap(){
         const pl=L.polyline(pp,{color:col,weight:w,opacity:op}).addTo(MAP);
         if(!first)first=pl;
         if(L0.subnombre)pl.bindTooltip(esc(L0.subnombre),{sticky:true,className:'cx-tip'});
-        pl.on('click',e=>{if(isTrunk){const dv=e.latlng.lat<-36.6?'sur':'central';flyToDivision(dv);}else flyToDivision(L0.div);});
       });
       markSeg(sg);  /* marcar todo el corredor de esta línea como pintado */
     });
@@ -1444,21 +1454,47 @@ function lineFromRow(r){
   if(/central|lcs|tronc|alameda.?chill/.test(hay))return _LINE_IDS.includes('trunk')?'trunk':null;
   return null;
 }
+const _CRITRANK={roja:0,caten:1,confin:2,amar:3,mant:4};
 function refreshStatusExtra(){
   if(!LYR.extra)return;LYR.extra.clearLayers();if(!HAS_STATUS)return;
-  const seen={};  // para separar fallas que caen en el mismo punto
+  // agrupar por ubicación (~11 m) para no saturar: un marcador por punto
+  const groups={};
   STATUS_EXTRA.forEach(s=>{
     if(STATUS_FILTER!=='todos'&&!matchFilter(s))return;
-    const cls=s.estado==='mantencion'?'mant':(s.crit||'amar');
-    const isz=critIconSize(cls);
-    let lat=s.lat,lng=s.lng;
-    const key=lat.toFixed(5)+','+lng.toFixed(5);
-    const n=seen[key]||0;seen[key]=n+1;
-    if(n>0){const ang=n*2.399963,r=0.00012*Math.ceil(n/6);lat+=r*Math.cos(ang);lng+=r*Math.sin(ang);}  // espiral pequeña
-    const m=L.marker([lat,lng],{icon:L.divIcon({className:'',html:cls==='mant'?'<div class="cxhit"><div class="cxpulse mant"></div></div>':critIconHTML(cls),iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:550});
-    m.bindTooltip(esc(s.nombre)+(s.pkExact&&s.km!=null?(' · PK '+esc(s.km)):'')+' · '+(s.estado==='falla'?'EN FALLA':'MANTENCIÓN')+(s.ot?(' · '+esc(s.ot)):''),{className:'cx-tip',direction:'top',offset:[0,-8]});
-    m.on('click',()=>openFichaExtra(s));LYR.extra.addLayer(m);
+    const key=s.lat.toFixed(4)+','+s.lng.toFixed(4);
+    (groups[key]=groups[key]||{lat:s.lat,lng:s.lng,faults:[]}).faults.push(s);
+  });
+  Object.keys(groups).forEach(k=>{
+    const g=groups[k];
+    let worst=null;g.faults.forEach(s=>{const cl=s.estado==='mantencion'?'mant':(s.crit||'amar');if(worst==null||_CRITRANK[cl]<_CRITRANK[worst])worst=cl;});
+    const isz=critIconSize(worst);
+    const badge=g.faults.length>1?'<span class="fbadge">'+g.faults.length+'</span>':'';
+    const m=L.marker([g.lat,g.lng],{icon:L.divIcon({className:'',html:'<div class="cxhit">'+critVisual(worst)+badge+'</div>',iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:550});
+    const f0=g.faults[0],ref=f0.ref||f0.nombre;
+    const tip=g.faults.length>1?(esc(ref)+' · '+g.faults.length+' averías'):(esc(f0.nombre)+(f0.pkExact&&f0.km!=null&&f0.km!==''?(' · PK '+esc(f0.km)):'')+' · '+(f0.estado==='falla'?'EN FALLA':'MANTENCIÓN')+(f0.ot?(' · '+esc(f0.ot)):''));
+    m.bindTooltip(tip,{className:'cx-tip',direction:'top',offset:[0,-8]});
+    m.on('click',()=>openFichaGroup(g));LYR.extra.addLayer(m);
   });}
+const _CRITMETA={roja:['#ff0000','Crítica (aguja/barrera)'],caten:['#eaff00','Catenaria / FO'],confin:['#5a2d82','Confinamiento'],amar:['#8a1f3d','Otra falla'],mant:['#ffd21e','Mantención']};
+function openFichaGroup(g){
+  const ref=g.faults[0].ref||g.faults[0].nombre||'Punto en falla';
+  const kmv=g.faults[0].km;
+  const rows=g.faults.slice().sort((a,b)=>{const ca=a.estado==='mantencion'?'mant':(a.crit||'amar'),cb=b.estado==='mantencion'?'mant':(b.crit||'amar');return _CRITRANK[ca]-_CRITRANK[cb];}).map(s=>{
+    const cl=s.estado==='mantencion'?'mant':(s.crit||'amar');const cm=_CRITMETA[cl]||_CRITMETA.amar;
+    return `<div class="favrow" style="--fc:${cm[0]}"><div class="favtop"><span class="favdot"></span><span class="favcat">${cm[1]}</span>${s.ot?`<span class="favot">${esc(s.ot)}</span>`:''}</div>`
+      +`${s.pkExact&&s.km!=null&&s.km!==''?`<div class="favpk">PK ${esc(s.km)}</div>`:''}`
+      +`${s.desc?`<div class="favdesc">${esc(s.desc)}</div>`:''}`
+      +`${s.prioridad?`<div class="favmeta">Prioridad: ${esc(s.prioridad)}</div>`:''}${s.fecha?`<div class="favmeta">Fecha: ${esc(s.fecha)}</div>`:''}</div>`;
+  }).join('');
+  const n=g.faults.length;
+  $('#cxcard').innerHTML=`<div class="ch"><button class="x" onclick="closeFicha()">×</button>
+    <h4>${esc(ref)}</h4>
+    <div class="km">${kmv!=null&&kmv!==''?'Km '+esc(kmv)+' · ':''}${n} aver${n===1?'ía':'ías'} en este punto</div></div>
+    <div class="cb favlist">${rows}</div>`;
+  $('#cxcard').classList.add('show');
+  const worst=g.faults.reduce((w,s)=>{const cl=s.estado==='mantencion'?'mant':(s.crit||'amar');return (w==null||_CRITRANK[cl]<_CRITRANK[w])?cl:w;},null);
+  dropPin(g.lat,g.lng,(_CRITMETA[worst]||_CRITMETA.amar)[0]);
+}
 function openFichaExtra(s){const pc={nombre:s.nombre,km:s.km||'',lat:s.lat,lng:s.lng,red:s.red||'',line:s.line||'',_extra:true};STATUS[cxKey(pc)]={estado:s.estado,ot:s.ot,desc:s.desc,prioridad:s.prioridad,fecha:s.fecha,crit:s.crit,pkExact:s.pkExact,ref:s.ref};openFicha(pc);}
 function applyFracttalStatuses(rows,reset){
   if(reset!==false){STATUS={};STATUS_EXTRA=[];}
@@ -1510,8 +1546,7 @@ function applyFracttalStatuses(rows,reset){
     let targets=hits;
     if(pk!=null&&hits.length>1){const close=hits.filter(h=>Math.abs((parseFloat(String(h.obj.km||h.obj.pk).replace(',','.'))||1e9)-pk)<1.5);if(close.length)targets=close;}
     targets.slice(0,1).forEach(h=>{
-      if(h.kind==='cruce'){STATUS[cxKey(h.obj)]=meta;}
-      else{STATUS_EXTRA.push(Object.assign({lat:h.obj.lat,lng:h.obj.lng,nombre:raw,km:h.obj.km||h.obj.pk||''},meta));}
+      STATUS_EXTRA.push(Object.assign({lat:h.obj.lat,lng:h.obj.lng,nombre:raw,km:h.obj.km||h.obj.pk||'',line:h.obj.line,ref:h.obj.nombre||h.obj.nombre_libro||raw},meta));
       applied++;
     });
   });
@@ -1906,7 +1941,7 @@ function buildSections(){
           <button class="opc" data-f="roja" onclick="setStatusFilter('roja')"><i style="background:#ff0000"></i>Críticas <b id="cnt-roja">—</b></button>
           <button class="opc" data-f="caten" onclick="setStatusFilter('caten')"><i style="background:#eaff00"></i>Catenaria/FO <b id="cnt-caten">—</b></button>
           <button class="opc" data-f="confin" onclick="setStatusFilter('confin')"><i style="background:#5a2d82;border-radius:2px;position:relative" title="reja/confinamiento"></i>Confinamiento <b id="cnt-confin">—</b></button>
-          <button class="opc" data-f="falla" onclick="setStatusFilter('falla')"><i style="background:#234a50"></i>Otras fallas <b id="cnt-falla">—</b></button>
+          <button class="opc" data-f="falla" onclick="setStatusFilter('falla')"><i style="background:#8a1f3d"></i>Otras fallas <b id="cnt-falla">—</b></button>
           <button class="opc" data-f="mantencion" onclick="setStatusFilter('mantencion')"><i style="background:#ffd21e;opacity:.6"></i>Mantención <b id="cnt-mant">—</b></button>
         </div>
         <div class="opbtns">
