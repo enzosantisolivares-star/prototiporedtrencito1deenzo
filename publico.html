@@ -935,17 +935,17 @@ nav.side{z-index:120}
 .legend .lk{display:flex;align-items:center;gap:6px}
 .legend .lk i{width:10px;height:10px;border-radius:50%;display:inline-block}
 /* panel operativo */
-.oppanel{left:14px;bottom:14px;padding:9px 11px;max-width:252px;max-height:calc(100% - 90px);overflow-y:auto;color:#cfe2f1;transition:max-height .25s ease,padding .25s ease}
-.oppanel::-webkit-scrollbar{width:5px}
-.oppanel::-webkit-scrollbar-thumb{background:rgba(135,195,245,.3);border-radius:4px}
+.oppanel{left:14px;bottom:14px;padding:9px 11px;max-width:252px;overflow:visible;color:#cfe2f1;transition:padding .25s ease}
 .oppanel.collapsed{max-height:40px;overflow:hidden;padding:9px 11px}
 .ophead{cursor:pointer}
-.ophead .toggle{margin-left:6px;color:#8aa6bd;transition:transform .2s;flex:none}
+.ophead .toggle{margin-left:auto;color:#8aa6bd;transition:transform .2s;flex:none}
 .oppanel.collapsed .ophead .toggle{transform:rotate(-90deg)}
 .ophead{display:flex;align-items:baseline;gap:8px}
-.ophead .src{margin-left:auto}
 .ophead b{font-family:var(--disp);font-size:14px;color:#fff}
-.ophead .src{font-size:10.5px;color:#8aa6bd}
+.live{font-weight:800;transition:color .3s}
+.live.ok{color:#43d17f}
+.live.loading{color:#8aa6bd}
+.live.off{color:#7c8894}
 .opcounts{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:7px 0 6px}
 .opc{display:flex;align-items:center;gap:5px;font-size:11px;color:#cfe2f1;background:rgba(135,195,245,.07);border:1px solid rgba(135,195,245,.16);border-radius:7px;padding:4px 7px;cursor:pointer;text-align:left}
 .opc:hover{border-color:rgba(135,195,245,.4)}
@@ -1457,13 +1457,22 @@ function critLevel(txt){
      Nota: "Descomprobando" es un estado; la categoría la da el elemento nombrado.
      El CV va SIEMPRE a señalización, por eso se evalúa antes que vía. */
   const t=normName(txt||'');
-  if(/catenaria/.test(t)||/pantografo|pantografos|enredo/.test(t)||/suspensor|triangulo|triangulos|postacion/.test(t)||/2300\s?v|\b3\s?kv|3000\s?v/.test(t)||/fibra.*optica|\bfo[as]?\b|\bf\.?o\.?\b/.test(t))return 'caten';
-  if(/confinamiento|malla/.test(t))return 'confin';
+  // Prioridad 1 (rojo): eventos críticos por su severidad, se evalúan primero
   if(/\baguja/.test(t)||/\bag\b|\bag\d|\bag[-_]/.test(t))return 'roja';
   if(/barrera|\bpluma\b/.test(t))return 'roja';
+  if(/corte.*fibra|fibra.*optica.*cort|corte.*\bfo\b|\bfo\b.*cort/.test(t))return 'roja';        // corte de fibra óptica
+  if(/perdida.*comunicac|sin.*comunicac|falla.*comunicac|caida.*comunicac/.test(t))return 'roja'; // pérdida de comunicaciones
+  if(/corte.*catenaria|catenaria.*cortad/.test(t))return 'roja';                                   // corte de catenaria
+  if(/apertura.*senal|senal(es)?.*abiert|apertura.*señal/.test(t))return 'roja';                   // apertura de señales
+  // Prioridad 2 (amarillo flúor): catenaria y su equipamiento eléctrico
+  if(/catenaria/.test(t)||/pantografo|pantografos|enredo/.test(t)||/suspensor|triangulo|triangulos|postacion/.test(t)||/2300\s?v|\b3\s?kv|3000\s?v/.test(t)||/fibra.*optica|\bfo[as]?\b|\bf\.?o\.?\b/.test(t))return 'caten';
+  // Prioridad 4 (morado): confinamiento
+  if(/confinamiento|malla/.test(t))return 'confin';
+  // Prioridad 3 (rosado): señalización + CV (circuito de vía). CV va aquí, no en vía.
   if(/senalizacion|\bsenal\b|circuito.*via|\bcv\b|\bc\.?\s?v\.?\b/.test(t))return 'senal';
+  // Prioridad 5 (amarillo oscuro): fallas de vía
   if(/\briel|eclisa|\bperno|durmiente|balasto|\bfaja|\bvia\b|\bvias\b/.test(t))return 'via';
-  return 'amar';
+  return 'amar';  // Prioridad 6 (gris): otras fallas
 }
 function deriveEstado(r){
   let e=normName(r.estado||r.status||r.estado_op||'');
@@ -1649,7 +1658,7 @@ function importStatusFile(file){
     try{const j=JSON.parse(t);rows=Array.isArray(j)?j:(j.data||j.ot||j.rows||[]);}
     catch(e){rows=parseCSV(t);}
     const n=applyFracttalStatuses(rows,true);
-    $('#opsrc').textContent='Fracttal · '+file.name;
+    setLive('ok');
     setStatusFilter('todos');
     if(!n)alert('No se pudo asociar ninguna OT a un cruce. Revisa que el archivo tenga una columna con el nombre del cruce (cruce/nombre/activo) y el estado/tipo de la OT.');
   };
@@ -1660,9 +1669,9 @@ function demoStatus(){
   function pick(n,est){for(let i=0;i<n&&pool.length;i++){const c=pool.splice(Math.floor(Math.random()*pool.length),1)[0];
     STATUS[cxKey(c)]={estado:est,ot:'OT-'+(1000+Math.floor(Math.random()*9000)),desc:est==='falla'?'Falla en barrera / señalización detectada':'Mantenimiento programado de equipos',prioridad:est==='falla'?'Alta':'Media'};}}
   pick(14,'falla');pick(26,'mantencion');
-  HAS_STATUS=true;$('#opsrc').textContent='demo en vivo (simulado)';setStatusFilter('todos');updateStatusCounts();if(MAP)refreshCx(MAP.getZoom());
+  HAS_STATUS=true;setLive('ok');setStatusFilter('todos');updateStatusCounts();if(MAP)refreshCx(MAP.getZoom());
 }
-function clearStatus(){STATUS={};HAS_STATUS=false;STATUS_FILTER='todos';$('#opsrc').textContent='por tipo de cruce';
+function clearStatus(){STATUS={};HAS_STATUS=false;STATUS_FILTER='todos';setLive('off');
   $$('.opc').forEach(b=>b.classList.toggle('on',b.dataset.f==='todos'));updateStatusCounts();if(MAP)refreshCx(MAP.getZoom());}
 function matchFilter(s){const f=STATUS_FILTER;
   if(f==='roja')return s.estado==='falla'&&s.crit==='roja';
@@ -1681,25 +1690,22 @@ function updateStatusCounts(){
   const set=(id,v)=>{const el=$(id);if(el)el.textContent=v;};
   set('#cnt-todos',tot);set('#cnt-op',HAS_STATUS?op:'—');set('#cnt-roja',HAS_STATUS?roja:'—');set('#cnt-caten',HAS_STATUS?caten:'—');set('#cnt-senal',HAS_STATUS?senal:'—');set('#cnt-confin',HAS_STATUS?confin:'—');set('#cnt-via',HAS_STATUS?via:'—');set('#cnt-falla',HAS_STATUS?falla:'—');set('#cnt-mant',HAS_STATUS?mant:'—');
 }
+function setLive(state){const el=$('#livetag');if(!el)return;el.className='live '+state;}
 function connectFeed(url,everyMs){
   if(FEED_TIMER)clearInterval(FEED_TIMER);
-  const el=$('#opsrc');
-  if(el)el.textContent='conectando…';
-  const pull=()=>fetch(url,{cache:'no-store'}).then(r=>{
+  setLive('loading');
+  const pull=()=>{setLive('loading');return fetch(url,{cache:'no-store'}).then(r=>{
     if(!r.ok)throw new Error('HTTP '+r.status);
     return r.text();
   }).then(txt=>{
     let rows;const t=(txt||'').trim();
     try{const j=JSON.parse(t);rows=Array.isArray(j)?j:(j.data||j.ot||[]);}catch(e){rows=parseCSV(t);}
-    const n=applyFracttalStatuses(rows,true);
-    if(el)el.textContent='Libro de averías · en vivo · '+n+' ubicadas'+(STATUS_SINUBIC?(' · '+STATUS_SINUBIC+' s/ubicar'):'');
+    applyFracttalStatuses(rows,true);
+    setLive('ok');
   }).catch(e=>{
     console.warn('feed',e);
-    const isFileOrigin=location.protocol==='file:';
-    if(el)el.textContent=isFileOrigin
-      ? 'ERROR: abre este archivo vía http:// (no como archivo local) para conectar el feed'
-      : 'ERROR feed: '+(e&&e.message?e.message:'no se pudo conectar');
-  });
+    setLive('off');
+  });};
   pull();FEED_TIMER=setInterval(pull,everyMs||60000);
 }
 
@@ -1993,7 +1999,7 @@ function buildSections(){
         </div>
       </div>
       <div class="hud glass oppanel" id="oppanel">
-        <div class="ophead" onclick="toggleOppanel()"><b>Estado operativo</b><span class="src" id="opsrc">por tipo de cruce</span><span class="toggle">▾</span></div>
+        <div class="ophead" onclick="toggleOppanel()"><b>Libro de averías <span class="live loading" id="livetag">en vivo</span></b><span class="toggle">▾</span></div>
         <div class="opcounts" id="opcounts">
           <button class="opc on" data-f="todos" onclick="setStatusFilter('todos')"><i style="background:#7fd3ff"></i>Todos <b id="cnt-todos">—</b></button>
           <button class="opc" data-f="operativo" onclick="setStatusFilter('operativo')"><i style="background:#43d17f"></i>Operativos <b id="cnt-op">—</b></button>
@@ -2014,7 +2020,6 @@ function buildSections(){
           <button class="opc on" id="tSE" onclick="toggleInfra('se')"><i style="background:rgba(120,180,210,.7)"></i>S/E <b>${(DATA.ssee_lt||[]).filter(e=>e.se).length}</b></button>
           <button class="opc" id="tLT" onclick="toggleInfra('lt')"><i style="background:#2bb6ad"></i>LT <b>${(DATA.ssee_lt||[]).filter(e=>e.lt).length}</b></button>
         </div>
-        <div class="ophint">Estado <b style="color:#43d17f">en vivo</b> desde el libro de averías (últimos 15 días, se refresca solo cada ~2,5 min). Acércate para ver los cruces. <b style="color:#9b6dff">Alameda–Nos</b> en morado.</div>
       </div>
       <div class="hud glass cxcard" id="cxcard"></div>
     </div></section>`);
