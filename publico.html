@@ -839,6 +839,10 @@ mark{background:color-mix(in srgb,var(--amber) 35%,transparent);color:inherit;bo
 .mapstage{position:relative;z-index:0;border-radius:16px;overflow:hidden;height:clamp(520px,76vh,940px);min-height:460px;
   background:radial-gradient(135% 95% at 50% -10%,#103a5c 0%,#0a2236 48%,#06121d 100%);box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 0 0 1px rgba(120,180,230,.16)}
 .mapstage.full{position:fixed;inset:0;z-index:300;height:100vh!important;max-height:none;border-radius:0}
+.mapstage:fullscreen,.mapstage:-webkit-full-screen{width:100vw;height:100vh;max-height:none;border-radius:0}
+.mapstage.horiz #leafmap{will-change:transform}
+.mapstage.horiz .stn-tip{display:none}
+.mapstage.horiz .leaflet-marker-icon .cxhit{transform:rotate(90deg)}
 .mapstage.lightmap{background:radial-gradient(135% 95% at 50% -10%,#d6e3ee 0%,#e7edf2 60%,#dde6ee 100%)}
 .mapstage.lightmap .leaflet-container{background:#e7edf2}
 .mapstage.lightmap .stn-tip{background:rgba(255,255,255,.92);color:#0f2336;border-color:rgba(40,90,140,.25)}
@@ -1032,7 +1036,7 @@ nav.side{z-index:120}
     <div><h1>RED EFE<span style="color:var(--efe)"> INTERACTIVA</span></h1><small>Mapa ferroviario · cruces, estaciones y estado operativo · por Enzo Santis, Operador Gestión Fallas y Averías</small></div>
   </div>
   <div class="topbtns">
-    <button class="btn sm" id="fullBtn" onclick="toggleFull()" title="Ver mapa en horizontal (pantalla completa)"><svg width="17" height="13" viewBox="0 0 17 13" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1.3" width="15" height="10.4" rx="1.6"/><path d="M4.2 4 L2.4 4 L2.4 5.8 M12.8 9 L14.6 9 L14.6 7.2"/></svg></button>
+    <button class="btn sm" id="horizBtn" onclick="toggleHorizontal()" title="Ver mapa horizontal (norte a la izquierda)"><svg width="18" height="14" viewBox="0 0 18 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 9.5 L2 4.5 L16 4.5 L16 9.5 Z"/><path d="M2 7 L5 5.2 M2 7 L5 8.8" stroke-linecap="round"/><text x="12" y="8.4" font-size="4.5" fill="currentColor" stroke="none" font-family="sans-serif">S</text></svg></button>
     <button class="btn sm" id="themeBtn" onclick="toggleTheme()" title="Modo claro/oscuro">◐</button>
   </div>
 </header>
@@ -1239,6 +1243,13 @@ function buildMap(){
   try{new ResizeObserver(()=>{if(MAP)MAP.invalidateSize();}).observe($('#mapstage'));}catch(e){}
   window.addEventListener('resize',()=>{if(MAP)MAP.invalidateSize();});
   MAP.whenReady(()=>{MAP.invalidateSize();updateLOD();});
+  // clicks correctos cuando el mapa está en horizontal (rotado -90°): norte a la izquierda
+  const _mecp=MAP.mouseEventToContainerPoint.bind(MAP);
+  MAP.mouseEventToContainerPoint=function(e){
+    if(!HORIZ)return _mecp(e);
+    const r=this._container.getBoundingClientRect();
+    return L.point(this._container.offsetWidth-(e.clientY-r.top), e.clientX-r.left);
+  };
   setTimeout(()=>{MAP.invalidateSize();updateLOD();},120);
   try{connectFeed(FEED_URL,150000);}catch(e){console.warn('feed init',e);}
 }
@@ -1332,9 +1343,24 @@ function resetView(){RMselDiv=null;MAP.flyToBounds(MAIN_BOUNDS,{duration:1.0});s
   $$('.divchip').forEach(c=>c.classList.remove('on'));
   DATA.geo.lines.forEach(L0=>{const ly=LYR.lines[L0.id];if(ly)ly.setStyle({opacity:.9})});closeFicha();}
 function zoomBy(d){MAP.setZoom(Math.max(5,Math.min(18,MAP.getZoom()+d)))}
-function toggleFull(force){const st=$('#mapstage');const on=(force===false)?false:(force===true?true:!st.classList.contains('full'));st.classList.toggle('full',on);document.body.style.overflow=on?'hidden':'';setTimeout(()=>MAP.invalidateSize(),320);}
+function toggleFull(force){const st=$('#mapstage');
+  const want=(force===false)?false:(force===true?true:!document.fullscreenElement&&!st.classList.contains('full'));
+  const req=st.requestFullscreen||st.webkitRequestFullscreen||st.msRequestFullscreen;
+  const exit=document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen;
+  if(want){ if(req){req.call(st).catch(()=>{st.classList.add('full');document.body.style.overflow='hidden';setTimeout(()=>MAP.invalidateSize(),300);});}
+    else{st.classList.add('full');document.body.style.overflow='hidden';setTimeout(()=>MAP.invalidateSize(),300);} }
+  else{ if(document.fullscreenElement&&exit){exit.call(document);} else {st.classList.remove('full');document.body.style.overflow='';setTimeout(()=>MAP.invalidateSize(),300);} }
+}
+document.addEventListener('fullscreenchange',()=>{const st=$('#mapstage');const on=!!document.fullscreenElement;
+  st.classList.toggle('full',on);document.body.style.overflow=on?'hidden':'';if(HORIZ)layoutHoriz();setTimeout(()=>MAP.invalidateSize(),120);});
+let HORIZ=false;
+function toggleHorizontal(){HORIZ=!HORIZ;$('#mapstage').classList.toggle('horiz',HORIZ);const b=$('#horizBtn');if(b)b.classList.toggle('on',HORIZ);layoutHoriz();setTimeout(()=>MAP.invalidateSize(),80);}
+function layoutHoriz(){const st=$('#mapstage'),el=$('#leafmap');if(!el)return;
+  if(HORIZ){const w=st.clientWidth,h=st.clientHeight;el.style.position='absolute';el.style.width=h+'px';el.style.height=w+'px';el.style.left='50%';el.style.top='50%';el.style.transformOrigin='center center';el.style.transform='translate(-50%,-50%) rotate(-90deg)';}
+  else{el.style.position='';el.style.width='';el.style.height='';el.style.left='';el.style.top='';el.style.transform='';el.style.transformOrigin='';}}
+window.addEventListener('resize',()=>{if(HORIZ){layoutHoriz();MAP.invalidateSize();}});
 function toggleOppanel(force){const p=$('#oppanel');const on=(force===undefined)?!p.classList.contains('collapsed'):force;p.classList.toggle('collapsed',on);}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#mapstage').classList.contains('full'))toggleFull(false);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#mapstage').classList.contains('full'))toggleFull(false);if(HORIZ)toggleHorizontal();}});
 
 function buildSearch(){
   const inp=$('#mapq'),res=$('#mapres');
