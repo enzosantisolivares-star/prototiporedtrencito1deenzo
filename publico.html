@@ -947,7 +947,7 @@ nav.side{z-index:120}
 .legend .lk{display:flex;align-items:center;gap:6px}
 .legend .lk i{width:10px;height:10px;border-radius:50%;display:inline-block}
 /* panel operativo */
-.oppanel{left:14px;bottom:14px;padding:15px 16px;max-width:262px;overflow:hidden;color:#cfe2f1;transition:padding .25s ease}
+.oppanel{left:14px;bottom:14px;padding:15px 16px;width:262px;max-width:calc(100% - 20px);overflow:hidden;color:#cfe2f1;transition:padding .25s ease}
 .oppanel.collapsed{max-height:48px;overflow:hidden;padding:15px 16px}
 .ophead{cursor:pointer}
 .ophead .toggle{margin-left:auto;color:#8aa6bd;transition:transform .2s;flex:none}
@@ -958,8 +958,8 @@ nav.side{z-index:120}
 .live.ok{color:#43d17f}
 .live.loading{color:#8aa6bd}
 .live.off{color:#7c8894}
-.opcounts{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:7px 0 6px}
-.opc{display:flex;align-items:center;gap:5px;font-size:11px;color:#cfe2f1;background:rgba(135,195,245,.07);border:1px solid rgba(135,195,245,.16);border-radius:7px;padding:4px 7px;cursor:pointer;text-align:left}
+.opcounts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px;margin:7px 0 6px}
+.opc{display:flex;align-items:center;gap:5px;font-size:11px;color:#cfe2f1;background:rgba(135,195,245,.07);border:1px solid rgba(135,195,245,.16);border-radius:7px;padding:4px 7px;cursor:pointer;text-align:left;min-width:0}
 .opc:hover{border-color:rgba(135,195,245,.4)}
 .opc.on{background:rgba(135,195,245,.16);border-color:rgba(135,195,245,.5);color:#fff}
 .opc i{width:9px;height:9px;border-radius:50%;flex:none}
