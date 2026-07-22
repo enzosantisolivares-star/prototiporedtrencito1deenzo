@@ -1521,7 +1521,7 @@ function deriveEstado(r){
   let e=normName(r.estado||r.status||r.estado_op||'');
   if(['operativ','ok','cerrad','finalizad','completad','resuelto'].some(x=>e.includes(x)))return 'operativo';
   if(['falla','averia','fuera de servicio'].some(x=>e.includes(x)))return 'falla';
-  if(['mantencion','mantenimiento','preventiv','programad'].some(x=>e.includes(x)))return 'mantencion';
+  if(['mantencion','mantenimiento','preventiv','programad','solicitud'].some(x=>e.includes(x)))return 'mantencion';
   const tipo=normName(r.tipo||r.tipo_ot||r.clase||''),eo=normName(r.estado_ot||r.estadoot||r.estado||'');
   if(['finalizad','cerrad','completad'].some(x=>eo.includes(x)))return 'operativo';
   if(tipo.includes('correctiv')&&['pendiente','abiert','proceso','curso','asignad'].some(x=>eo.includes(x)))return 'falla';
