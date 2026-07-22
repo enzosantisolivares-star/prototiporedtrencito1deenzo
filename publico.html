@@ -897,7 +897,7 @@ mark{background:color-mix(in srgb,var(--amber) 35%,transparent);color:inherit;bo
   background:rgba(11,24,37,.66);backdrop-filter:blur(12px);color:#eaf3fb;font-family:var(--body);font-size:14px;outline:none}
 .mapsearch input::placeholder{color:#83a4bf}
 .mapsearch input:focus{border-color:#2f8fd6;box-shadow:0 0 0 3px rgba(47,143,214,.22)}
-.mapsearch .res{position:absolute;left:0;right:0;top:50px;max-height:340px;overflow:auto;z-index:1400;
+.mapsearch .res{position:fixed;max-height:60vh;overflow:auto;z-index:1400;
   background:rgba(9,18,28,.95);backdrop-filter:blur(14px);border:1px solid rgba(135,195,245,.22);border-radius:12px;
   box-shadow:0 18px 44px rgba(0,0,0,.55);display:none}
 .mapsearch .res.show{display:block}
@@ -1463,6 +1463,10 @@ function buildSearch(){
   let cur=[];
   function render(){
     res.innerHTML=cur.length?cur.map((it,i)=>`<div class="ri" data-i="${i}"><span class="ricon ${it.type}">${it.type==='cruce'?'PaN':it.type==='infra'?(it.e.se?'S/E':'LT'):'Est'}</span><span class="pk">${esc(it.pk)}</span><span class="rinfo"><span class="nm">${esc(it.nm)}</span><span class="sub">${esc(it.sub)}</span></span></div>`).join(''):'<div class="ri"><span class="sub" style="padding-left:6px">Sin coincidencias</span></div>';
+    const wrapR=inp.closest('.mapsearch').getBoundingClientRect();
+    let leftPos=wrapR.left,widthPos=Math.max(wrapR.width,340);
+    if(leftPos+widthPos>window.innerWidth-10)leftPos=Math.max(10,window.innerWidth-10-widthPos);
+    res.style.left=leftPos+'px';res.style.top=(wrapR.bottom+6)+'px';res.style.width=widthPos+'px';
     res.classList.add('show');
   }
   function run(){
@@ -2100,7 +2104,7 @@ function buildSections(){
           <button class="opc" data-f="roja" onclick="setStatusFilter('roja')"><i style="background:#ff0000"></i>Críticas <b id="cnt-roja">—</b></button>
           <button class="opc" data-f="aguja" onclick="setStatusFilter('aguja')"><i style="background:#9b30ff"></i>Aguja <b id="cnt-aguja">—</b></button>
           <button class="opc" data-f="caten" onclick="setStatusFilter('caten')"><i style="background:#eaff00"></i>Catenaria/FO <b id="cnt-caten">—</b></button>
-          <button class="opc" data-f="senal" onclick="setStatusFilter('senal')"><i style="background:#ff4fa3"></i>Señalización/CV <b id="cnt-senal">—</b></button>
+          <button class="opc" data-f="senal" onclick="setStatusFilter('senal')"><i style="background:#ff4fa3"></i>Señalización <b id="cnt-senal">—</b></button>
           <button class="opc" data-f="via" onclick="setStatusFilter('via')"><i style="background:#c19a00"></i>Fallas de vía <b id="cnt-via">—</b></button>
           <button class="opc" data-f="falla" onclick="setStatusFilter('falla')"><i style="background:#949ca3"></i>Otras fallas <b id="cnt-falla">—</b></button>
           <button class="opc" data-f="mantencion" onclick="setStatusFilter('mantencion')"><i style="background:#949ca3;opacity:.7"></i>Solicitudes <b id="cnt-mant">—</b></button>
