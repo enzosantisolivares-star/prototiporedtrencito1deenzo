@@ -1325,9 +1325,11 @@ function refreshCx(z){
   });
   /* regula saturación: una sola marca operativa por celda de píxeles (más separación al alejar) */
   const cell=detail?(z>=12.5?9:13):18, grid={}; let n=0;
+  const showMant=z>=11;
   for(const c of list){
     const est=statusOf(c).estado;
     if(!detail&&est==='operativo')continue;
+    if(est==='mantencion'&&!showMant)continue;
     const force=(est==='falla'||est==='mantencion');
     if(!force){
       const p=MAP.latLngToContainerPoint([c.lat,c.lng]);
@@ -1569,6 +1571,7 @@ function lineFromRow(r){
 const _CRITRANK={roja:0,aguja:1,caten:2,senal:3,via:4,amar:5,mant:6};
 function refreshStatusExtra(){
   if(!LYR.extra)return;LYR.extra.clearLayers();if(!HAS_STATUS)return;
+  const showMant=MAP?MAP.getZoom()>=11:true;
   // agrupar por ubicación (~11 m) para no saturar: un marcador por punto
   const groups={};
   STATUS_EXTRA.forEach(s=>{
@@ -1579,6 +1582,7 @@ function refreshStatusExtra(){
   Object.keys(groups).forEach(k=>{
     const g=groups[k];
     let worst=null;g.faults.forEach(s=>{const cl=s.estado==='mantencion'?'mant':(s.crit||'amar');if(worst==null||_CRITRANK[cl]<_CRITRANK[worst])worst=cl;});
+    if(worst==='mant'&&!showMant)return;
     const isz=critIconSize(worst);
     const m=L.marker([g.lat,g.lng],{icon:L.divIcon({className:'',html:'<div class="cxhit">'+critVisual(worst)+'</div>',iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:550});
     const f0=g.faults[0],ref=f0.ref||f0.nombre;
@@ -1629,42 +1633,41 @@ function applyFracttalStatuses(rows,reset){
       }}
     // ---- ubicación por PK exacto (si hay PK y podemos determinar la línea) ----
     if(pk!=null){
-      let lineId=null,bestHit=null;
+      let lineId=null,bestHit=null,bestP=null;
       if(hits&&hits.length){
         const withLine=hits.filter(h=>h.line);
         if(withLine.length){
-          // Si el nombre viene como "A - B" y "A" se repite en varias líneas (ej. "San Pedro" aparece
-          // en Valparaíso, Talca, Chillán, Concepción...), usar la ubicación real de "B" (ej. "Limache")
-          // para preferir la línea geográficamente correcta, en vez de solo la más cercana en km
-          // (que puede coincidir por pura casualidad numérica en una línea lejana).
-          let geoPref=null;
+          // Si el nombre viene como "A - B" (ej. "San Pedro - Limache") y "A" se repite en varias
+          // líneas, se calcula el punto real de cada candidata para este PK y se prefiere la que
+          // quede geográficamente más cerca de "B" -- en vez de solo la más cercana en km (que
+          // puede coincidir por azar en una línea lejana, o depender de una línea sin geometría
+          // fiable para ese tramo).
           const segs=String(raw).split(/\s*[-\u2013]\s*/);
+          let otherPts=[];
           if(segs.length>1&&withLine.length>1){
-            let otherPts=[];
             for(const k of matchKeys(segs[segs.length-1])){if(PIDX[k]){otherPts=otherPts.concat(PIDX[k].map(x=>x.obj).filter(o=>o.lat!=null));}}
-            if(otherPts.length){
-              let best=null;
-              withLine.forEach(h=>{
-                if(h.obj.lat==null)return;
-                otherPts.forEach(o=>{const d=_hav([h.obj.lat,h.obj.lng],[o.lat,o.lng]);if(best==null||d<best.d)best={line:h.line,d};});
-              });
-              if(best&&best.d<60000)geoPref=best.line;
-            }
           }
-          withLine.sort((a,b)=>{
-            if(geoPref){const pa=a.line===geoPref?0:1,pb=b.line===geoPref?0:1;if(pa!==pb)return pa-pb;}
-            const ka=parseFloat(String(a.obj.km||a.obj.pk).replace(',','.'));
-            const kb=parseFloat(String(b.obj.km||b.obj.pk).replace(',','.'));
-            return Math.abs((isNaN(ka)?1e9:ka)-pk)-Math.abs((isNaN(kb)?1e9:kb)-pk);
-          });
-          bestHit=withLine[0];lineId=bestHit.line;
+          const cands=withLine.map(h=>{
+            const hk=parseFloat(String(h.obj.km||h.obj.pk).replace(',','.'));
+            const hp=(!isNaN(hk)&&Math.abs(hk-pk)<=0.12&&h.obj.lat!=null)?[h.obj.lat,h.obj.lng]:pkToLatLng(h.line,pk);
+            if(!hp)return null;
+            let geo=Infinity;
+            otherPts.forEach(o=>{const d=_hav(hp,[o.lat,o.lng]);if(d<geo)geo=d;});
+            return {h,hp,geo,km:hk};
+          }).filter(Boolean);
+          if(cands.length){
+            if(otherPts.length&&cands.some(c=>c.geo<60000)){
+              cands.sort((a,b)=>a.geo-b.geo);
+            } else {
+              cands.sort((a,b)=>Math.abs((isNaN(a.km)?1e9:a.km)-pk)-Math.abs((isNaN(b.km)?1e9:b.km)-pk));
+            }
+            bestHit=cands[0].h;bestP=cands[0].hp;lineId=bestHit.line;
+          }
         }
       }
       if(!lineId)lineId=lineFromRow(r);
       if(lineId){
-        // si el punto que mejor coincide está prácticamente en el km del PK (±0.12), usar sus coords reales; si no, interpolar al PK exacto
-        const bk=bestHit?parseFloat(String(bestHit.obj.km||bestHit.obj.pk).replace(',','.')):NaN;
-        let p=(bestHit&&!isNaN(bk)&&Math.abs(bk-pk)<=0.12&&bestHit.obj.lat!=null)?[bestHit.obj.lat,bestHit.obj.lng]:pkToLatLng(lineId,pk);
+        let p=bestP||pkToLatLng(lineId,pk);
         if(p){
           const near=(bestHit?(bestHit.obj.nombre||bestHit.obj.nombre_libro):(hits&&hits.length?(hits[0].obj.nombre||hits[0].obj.nombre_libro):''))||'';
           STATUS_EXTRA.push(Object.assign({lat:p[0],lng:p[1],nombre:raw,km:Math.round(pk*1000)/1000,line:lineId,pkExact:true,ref:near},meta));
