@@ -1633,7 +1633,26 @@ function applyFracttalStatuses(rows,reset){
       if(hits&&hits.length){
         const withLine=hits.filter(h=>h.line);
         if(withLine.length){
+          // Si el nombre viene como "A - B" y "A" se repite en varias líneas (ej. "San Pedro" aparece
+          // en Valparaíso, Talca, Chillán, Concepción...), usar la ubicación real de "B" (ej. "Limache")
+          // para preferir la línea geográficamente correcta, en vez de solo la más cercana en km
+          // (que puede coincidir por pura casualidad numérica en una línea lejana).
+          let geoPref=null;
+          const segs=String(raw).split(/\s*[-\u2013]\s*/);
+          if(segs.length>1&&withLine.length>1){
+            let otherPts=[];
+            for(const k of matchKeys(segs[segs.length-1])){if(PIDX[k]){otherPts=otherPts.concat(PIDX[k].map(x=>x.obj).filter(o=>o.lat!=null));}}
+            if(otherPts.length){
+              let best=null;
+              withLine.forEach(h=>{
+                if(h.obj.lat==null)return;
+                otherPts.forEach(o=>{const d=_hav([h.obj.lat,h.obj.lng],[o.lat,o.lng]);if(best==null||d<best.d)best={line:h.line,d};});
+              });
+              if(best&&best.d<60000)geoPref=best.line;
+            }
+          }
           withLine.sort((a,b)=>{
+            if(geoPref){const pa=a.line===geoPref?0:1,pb=b.line===geoPref?0:1;if(pa!==pb)return pa-pb;}
             const ka=parseFloat(String(a.obj.km||a.obj.pk).replace(',','.'));
             const kb=parseFloat(String(b.obj.km||b.obj.pk).replace(',','.'));
             return Math.abs((isNaN(ka)?1e9:ka)-pk)-Math.abs((isNaN(kb)?1e9:kb)-pk);
