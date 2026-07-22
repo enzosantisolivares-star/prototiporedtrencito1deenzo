@@ -1519,6 +1519,10 @@ function critLevel(txt){
 }
 function deriveEstado(r){
   let e=normName(r.estado||r.status||r.estado_op||'');
+  // La columna OT trae "SOL.xxxxx" (solicitud) u "OT-xxxxx" (orden de trabajo).
+  // El texto de "estado" viene siempre como "falla" para ambos casos, así que el prefijo de OT manda.
+  const otv=normName(r.ot||r.OT||r.orden||r.n_ot||'');
+  if(/^sol[\.\-\s]*\d/.test(otv)||otv.startsWith('solicitud'))return 'mantencion';
   if(['operativ','ok','cerrad','finalizad','completad','resuelto'].some(x=>e.includes(x)))return 'operativo';
   if(['falla','averia','fuera de servicio'].some(x=>e.includes(x)))return 'falla';
   if(['mantencion','mantenimiento','preventiv','programad','solicitud'].some(x=>e.includes(x)))return 'mantencion';
