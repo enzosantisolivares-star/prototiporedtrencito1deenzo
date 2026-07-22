@@ -983,7 +983,7 @@ nav.side{z-index:120}
 @keyframes rojaCore{0%,100%{filter:brightness(1) saturate(1)}50%{filter:brightness(1.35) saturate(1.3)}}
 .cxpulse.caten{background:#eaff00;animation:opPulse 1.5s infinite;--pc:234,255,0;width:11px;height:11px}
 .cxpulse.senal{background:#ff4fa3;--pc:255,79,163;width:10px;height:10px}
-.cxpulse.confin{background:#5a2d82;--pc:90,45,130}
+.cxpulse.aguja{position:relative;background:radial-gradient(circle at 35% 32%,#f0d6ff 0%,#c34dff 30%,#9b30ff 65%,#6a1fb0 100%);box-shadow:0 0 4px 1px rgba(155,48,255,.75),0 0 8px 2px rgba(155,48,255,.35);--pc:155,48,255;width:11px;height:11px;animation:opPulse 1.5s infinite}
 .cxpulse.via{background:#c19a00;--pc:193,154,0;width:9px;height:9px}
 .cxpulse.amar{background:#949ca3;--pc:148,156,163;width:8px;height:8px}
 .cxpulse.mant{background:#949ca3;border-color:#dfe4e8;width:8px;height:8px;opacity:.92}
@@ -997,21 +997,28 @@ nav.side{z-index:120}
   background:color-mix(in srgb,var(--sc) 16%,transparent);border:1px solid var(--sc);border-radius:8px;padding:5px 11px;margin-top:10px}
 .opstate .dotp{width:9px;height:9px;border-radius:50%;background:var(--sc)}
 .zinfo{right:14px;bottom:14px;padding:7px 12px;font-family:var(--mono);font-size:12px;color:#9fc2dd}
-.cxcard{right:14px;top:68px;width:min(340px,80%);max-height:calc(100% - 190px);overflow:auto;padding:0;z-index:1300;
+.cxcard{right:14px;top:68px;width:min(320px,80%);max-height:calc(100% - 190px);overflow:auto;padding:0;z-index:1300;
   transform:translateX(125%);transition:transform .38s cubic-bezier(.2,.85,.25,1)}
 .cxcard.show{transform:none}
-.cxcard .ch{padding:16px 17px 12px;border-bottom:1px solid rgba(135,195,245,.16);position:sticky;top:0;
+.cxcard .ch{padding:13px 15px 9px;border-bottom:1px solid rgba(135,195,245,.16);position:sticky;top:0;
   background:rgba(9,20,32,.88);backdrop-filter:blur(12px)}
-.cxcard h4{font-family:var(--disp);font-size:19px;margin:0 28px 4px 0;color:#fff;line-height:1.15}
-.cxcard .km{font-family:var(--mono);font-weight:700;color:#43d17f;font-size:15px}
-.cxcard .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.cxcard h4{font-family:var(--disp);font-size:17px;margin:0 26px 2px 0;color:#fff;line-height:1.15}
+.cxcard .km{font-family:var(--mono);font-weight:600;color:#43d17f;font-size:12px;line-height:1.3}
+.cxcard .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
 .cxcard .tag{font-family:var(--disp);font-weight:700;font-size:10.5px;padding:3px 9px;border-radius:6px;letter-spacing:.3px}
 .cxcard .x{position:absolute;right:11px;top:10px;border:none;background:none;color:#9fc2dd;font-size:24px;cursor:pointer;line-height:1}
-.cxcard .cb{padding:12px 17px 22px}
-.cxcard .df{margin-top:13px}
+.cxcard .cb{padding:9px 15px 16px}
+.cxcard .df{margin-top:11px}
 .cxcard .k{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:#7fa6c4;font-weight:700;font-family:var(--disp)}
 .cxcard .v{color:#eaf3fb;font-size:14px;margin-top:2px;line-height:1.4}
-@media (max-width:760px){.mapstage{height:clamp(420px,72vh,640px)}.divchips{margin-left:0}.mapsearch{max-width:none}}
+@media (max-width:760px){.mapstage{height:clamp(420px,72vh,640px)}.divchips{margin-left:0}.mapsearch{max-width:none}
+  .cxcard{left:8px;right:8px;top:auto;bottom:8px;width:auto;max-height:44vh;border-radius:14px 14px 8px 8px;transform:translateY(115%)}
+  .cxcard.show{transform:none}
+  .cxcard .ch{padding:10px 13px 7px}
+  .cxcard h4{font-size:15.5px}
+  .cxcard .km{font-size:11px}
+  .cxcard .cb{padding:8px 13px 14px}
+}
 
 /* print */
 @media print{
@@ -1099,10 +1106,10 @@ function fenceSVG(){return '<svg class="cxfence" viewBox="0 0 24 24" xmlns="http
   +'</g>'
   +'<g stroke="#ff4d4d" stroke-width="2.2" stroke-linecap="round"><line x1="13.5" y1="13.5" x2="22.5" y2="22.5"/><line x1="22.5" y1="13.5" x2="13.5" y2="22.5"/></g>'
   +'</svg>';}
-const _CRITSIZE={roja:12,caten:11,senal:10,via:9,amar:8,mant:8};
-function critVisual(cl){if(cl==='confin')return fenceSVG();const d=_CRITSIZE[cl]||12;return '<div class="cxpulse '+cl+'" style="width:'+d+'px;height:'+d+'px"></div>';}
+const _CRITSIZE={roja:12,aguja:11,caten:11,senal:10,via:9,amar:8,mant:8};
+function critVisual(cl){const d=_CRITSIZE[cl]||12;return '<div class="cxpulse '+cl+'" style="width:'+d+'px;height:'+d+'px"></div>';}
 function critIconHTML(cl){return '<div class="cxhit">'+critVisual(cl)+'</div>';}
-function critIconSize(cl){return cl==='confin'?[30,30]:[30,30];}
+function critIconSize(cl){return [30,30];}
 /* ---- ubicación por PK exacto: interpola un kilómetro sobre la línea ---- */
 const _R_EARTH=6371000;
 function _hav(a,b){const p1=a[0]*Math.PI/180,p2=b[0]*Math.PI/180,dp=(b[0]-a[0])*Math.PI/180,dl=(b[1]-a[1])*Math.PI/180;
@@ -1134,6 +1141,7 @@ function pkToLatLng(lineId,pk){if(pk==null)return null;const L=DATA.geo.lines.fi
   const lat=A[i-1][1]+(A[i][1]-A[i-1][1])*t, lng=A[i-1][2]+(A[i][2]-A[i-1][2])*t;
   const sn=_snapToLine(L,lat,lng);
   return sn;}  // siempre sobre la traza dibujada (las anclas ya están filtradas a la vía)
+let CUR_SEL=null;
 function dropPin(lat,lng,color){ if(RMpin)MAP.removeLayer(RMpin);
   RMpin=L.marker([lat,lng],{interactive:false,zIndexOffset:1500,icon:L.divIcon({className:'',
     html:'<div class="geopin"><span class="ripple"></span><span class="ripple r2"></span>'+pinSVG(color)+'</div>',
@@ -1144,11 +1152,12 @@ function faultsAt(lat,lng){if(!HAS_STATUS||lat==null)return null;
 function gotoCruce(c){ if(c.lat==null){openFicha(c);return;}
   MAP.flyTo([c.lat,c.lng],15,{duration:1.25,easeLinearity:.2});
   const g=faultsAt(c.lat,c.lng);
-  if(g){openFichaGroup(g);} else {setTimeout(()=>dropPin(c.lat,c.lng,cxColor(c)),60); openFicha(c);} }
+  if(g){openFichaGroup(g,c,'cruce');} else {setTimeout(()=>dropPin(c.lat,c.lng,cxColor(c)),60); openFicha(c);} }
 function gotoEst(st){ MAP.flyTo([st.lat,st.lng],13,{duration:1.2,easeLinearity:.2});
   const g=faultsAt(st.lat,st.lng);
-  if(g){openFichaGroup(g);} else {setTimeout(()=>dropPin(st.lat,st.lng,'#2f8fd6'),60); openStationCard(st);} }
+  if(g){openFichaGroup(g,st,'est');} else {setTimeout(()=>dropPin(st.lat,st.lng,'#2f8fd6'),60); openStationCard(st);} }
 function openStationCard(st){
+  CUR_SEL={kind:'est',obj:st};
   const cod=(DATA.codigos||[]).find(x=>normName(x.estacion)===normName(st.nombre))||{};
   const f=(k,v)=>v?`<div class="df"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`:'';
   $('#cxcard').innerHTML=`<div class="ch"><button class="x" onclick="closeFicha()">×</button>
@@ -1160,9 +1169,9 @@ function fichaHTML(c){
   const f=(k,v)=>v?`<div class="df"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`:'';
   const tags=cxTags(c);
   const st=statusOf(c);
-  const critC=st.estado==='falla'?({roja:'#ff0000',caten:'#eaff00',senal:'#ff4fa3',confin:'#5a2d82',via:'#c19a00',amar:'#949ca3'}[st.crit||'amar']):null;
+  const critC=st.estado==='falla'?({roja:'#ff0000',aguja:'#9b30ff',caten:'#eaff00',senal:'#ff4fa3',via:'#c19a00',amar:'#949ca3'}[st.crit||'amar']):null;
   const sc=critC||{operativo:'#43d17f',mantencion:'#ffd21e'}[st.estado]||'#7fd3ff';
-  const sl=st.estado==='falla'?'En falla':{operativo:'Operativo',mantencion:'En mantención'}[st.estado]||'Operativo';
+  const sl=st.estado==='falla'?'En falla':{operativo:'Operativo',mantencion:'Solicitud'}[st.estado]||'Operativo';
   const stateBlock=HAS_STATUS?`<div class="opstate" style="--sc:${sc}"><span class="dotp"></span>${sl}${st.ot?(' · '+esc(st.ot)):''}</div>`:'';
   return `<div class="ch"><button class="x" onclick="closeFicha()">×</button>
     <h4>${esc(c.nombre||c.nombre_libro||'PaN sin nombre')}</h4>
@@ -1178,10 +1187,41 @@ function fichaHTML(c){
     </div>`;
 }
 function openFicha(c){
+  CUR_SEL={kind:'cruce',obj:c};
   $('#cxcard').innerHTML=fichaHTML(c);$('#cxcard').classList.add('show');
-  if(c.lat!=null){const s=statusOf(c);const col=s.estado==='falla'?({roja:'#ff0000',caten:'#eaff00',senal:'#ff4fa3',confin:'#5a2d82',via:'#c19a00',amar:'#949ca3'}[s.crit||'amar']):{operativo:'#43d17f',mantencion:'#949ca3'}[s.estado]||cxColor(c);dropPin(c.lat,c.lng,col);}
+  if(c.lat!=null){const s=statusOf(c);const col=s.estado==='falla'?({roja:'#ff0000',aguja:'#9b30ff',caten:'#eaff00',senal:'#ff4fa3',via:'#c19a00',amar:'#949ca3'}[s.crit||'amar']):{operativo:'#43d17f',mantencion:'#949ca3'}[s.estado]||cxColor(c);dropPin(c.lat,c.lng,col);}
 }
-function closeFicha(){$('#cxcard').classList.remove('show');if(RMpin){MAP.removeLayer(RMpin);RMpin=null}}
+function closeFicha(){CUR_SEL=null;$('#cxcard').classList.remove('show');if(RMpin){MAP.removeLayer(RMpin);RMpin=null}}
+function refreshOpenFicha(){
+  if(!CUR_SEL||!$('#cxcard').classList.contains('show'))return;
+  const sel=CUR_SEL;
+  if(sel.kind==='group'){
+    const g=faultsAt(sel.lat,sel.lng);
+    if(g){openFichaGroup(g,sel.fallback,sel.fallbackKind);return;}
+    if(sel.fallbackKind==='est'&&sel.fallback){openStationCard(sel.fallback);return;}
+    if(sel.fallbackKind==='infra'&&sel.fallback){openInfra(sel.fallback);return;}
+    if(sel.fallback){openFicha(sel.fallback);return;}
+    closeFicha();return;
+  }
+  if(sel.kind==='cruce'){
+    const c=sel.obj;
+    const g=c.lat!=null?faultsAt(c.lat,c.lng):null;
+    if(g){openFichaGroup(g,c,'cruce');return;}
+    openFicha(c);return;
+  }
+  if(sel.kind==='est'){
+    const st=sel.obj;
+    const g=st.lat!=null?faultsAt(st.lat,st.lng):null;
+    if(g){openFichaGroup(g,st,'est');return;}
+    openStationCard(st);return;
+  }
+  if(sel.kind==='infra'){
+    const e=sel.obj;
+    const g=e.lat!=null?faultsAt(e.lat,e.lng):null;
+    if(g){openFichaGroup(g,e,'infra');return;}
+    openInfra(e);return;
+  }
+}
 function setCrumb(id){const c=$('#crumb');
   if(!id){c.innerHTML='<span class="b1" onclick="resetView()">Red EFE</span><span class="sub">· toca una red o estación para acercarte</span>';return}
   const D=DIVISIONS.find(d=>d.id===id);
@@ -1280,7 +1320,7 @@ function refreshCx(z){
   /* prioridad: fallas/mantención primero, luego cruces con nombre, al final "Sin Nombre" */
   list.sort((a,bb)=>{
     const sa=statusOf(a),sb=statusOf(bb);
-    const w=s=>s.estado==='falla'?({roja:0,caten:0.15,senal:0.3,confin:0.45,via:0.6,amar:0.75}[s.crit||'amar']):s.estado==='mantencion'?1:3;
+    const w=s=>s.estado==='falla'?({roja:0,aguja:0.1,caten:0.2,senal:0.35,via:0.55,amar:0.75}[s.crit||'amar']):s.estado==='mantencion'?1:3;
     return (w(sa)+(named(a)?0:0.05))-(w(sb)+(named(bb)?0:0.05));
   });
   /* regula saturación: una sola marca operativa por celda de píxeles (más separación al alejar) */
@@ -1296,10 +1336,10 @@ function refreshCx(z){
       grid[key]=1;
     }
     let m;
-    if(HAS_STATUS&&est==='falla'){const cl=statusOf(c).crit||'amar';const isz=critIconSize(cl);m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:critIconHTML(cl),iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:cl==='roja'?700:cl==='caten'?685:cl==='senal'?670:cl==='confin'?655:cl==='via'?640:600});}
+    if(HAS_STATUS&&est==='falla'){const cl=statusOf(c).crit||'amar';const isz=critIconSize(cl);m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:critIconHTML(cl),iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:cl==='roja'?700:cl==='aguja'?690:cl==='caten'?680:cl==='senal'?665:cl==='via'?645:600});}
     else if(HAS_STATUS&&est==='mantencion')m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="cxpulse mant"></div>',iconSize:[12,12],iconAnchor:[6,6]}),zIndexOffset:400});
     else{const col=HAS_STATUS?'#43d17f':cxColor(c);m=L.circleMarker([c.lat,c.lng],{radius:named(c)?5:4,color:'#06121d',weight:1.3,fillColor:col,fillOpacity:named(c)?1:.82});}
-    const stx=HAS_STATUS?(est==='falla'?' · EN FALLA':est==='mantencion'?' · MANTENCIÓN':' · operativo'):'';
+    const stx=HAS_STATUS?(est==='falla'?' · EN FALLA':est==='mantencion'?' · SOLICITUD':' · operativo'):'';
     m.bindTooltip(`${esc(c.km)} · ${esc(c.nombre||c.nombre_libro||'PaN')}${stx}`,{className:'cx-tip',direction:'top',offset:[0,-8]});
     m.on('click',()=>openFicha(c));
     LYR.cx.addLayer(m);
@@ -1325,8 +1365,9 @@ function refreshInfra(z){
 }
 function gotoInfra(e){ if(e.lat==null)return; MAP.flyTo([e.lat,e.lng],13,{duration:1.1,easeLinearity:.2});
   const g=faultsAt(e.lat,e.lng);
-  if(g){openFichaGroup(g);} else {setTimeout(()=>dropPin(e.lat,e.lng,e.se?'#f5a623':'#2bb6ad'),60); openInfra(e);} }
+  if(g){openFichaGroup(g,e,'infra');} else {setTimeout(()=>dropPin(e.lat,e.lng,e.se?'#f5a623':'#2bb6ad'),60); openInfra(e);} }
 function openInfra(e){
+  CUR_SEL={kind:'infra',obj:e};
   const tipo=(e.se&&e.lt)?'Subestación + Local técnico':e.se?'Subestación eléctrica (S/E)':'Local técnico (LT)';
   const col=e.se?'#f5a623':'#2bb6ad';
   const f=(k,v)=>v?`<div class="df"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`:'';
@@ -1448,17 +1489,19 @@ function statusOf(c){return STATUS[cxKey(c)]||(c.id&&STATUS['id:'+normName(c.id)
 function buildCxNameIndex(){const idx={};DATA.cruces.forEach(c=>{[c.nombre,c.nombre_libro].forEach(n=>{const k=normName(n);if(k.length>2)(idx[k]=idx[k]||[]).push(c);});if(c.id)idx['id:'+normName(c.id)]=[c];});return idx;}
 function critLevel(txt){
   /* Criticidad:
-     1 'roja'  = aguja (incl. AG), barrera (incl. PLUMA)            -> rojo
+     0 'aguja' = aguja (incl. AG)                                    -> púrpura (mezcla crítica + señalización)
+     1 'roja'  = enclavamiento, barrera (incl. PLUMA), cortes de fibra/comunicaciones/catenaria, apertura de señales -> rojo
      2 'caten' = catenaria + FO + pantógrafo/enredo                 -> amarillo flúor
      3 'senal' = señalización + CV (circuito de vía)                -> rosado
-     4 'confin'= confinamiento / malla (marcador de reja rota)      -> morado
-     5 'via'   = riel, eclisa, perno, durmiente, balasto, vía, faja -> amarillo oscuro
-     6 'amar'  = otras fallas (se unifica con mantención en gris)   -> gris
+     4 'via'   = riel, eclisa, perno, durmiente, balasto, vía, faja, confinamiento/malla -> amarillo oscuro (dorado)
+     5 'amar'  = otras fallas (se unifica con solicitudes en gris)   -> gris
      Nota: "Descomprobando" es un estado; la categoría la da el elemento nombrado.
      El CV va SIEMPRE a señalización, por eso se evalúa antes que vía. */
   const t=normName(txt||'');
+  // Prioridad 0 (púrpura): aguja, categoría propia
+  if(/\baguja/.test(t)||/\bag\b|\bag\d|\bag[-_]/.test(t))return 'aguja';
   // Prioridad 1 (rojo): eventos críticos por su severidad, se evalúan primero
-  if(/\baguja/.test(t)||/\bag\b|\bag\d|\bag[-_]/.test(t))return 'roja';
+  if(/enclavamiento/.test(t))return 'roja';
   if(/barrera|\bpluma\b/.test(t))return 'roja';
   if(/corte.*fibra|fibra.*optica.*cort|corte.*\bfo\b|\bfo\b.*cort/.test(t))return 'roja';        // corte de fibra óptica
   if(/perdida.*comunicac|sin.*comunicac|falla.*comunicac|caida.*comunicac/.test(t))return 'roja'; // pérdida de comunicaciones
@@ -1466,8 +1509,8 @@ function critLevel(txt){
   if(/apertura.*senal|senal(es)?.*abiert|apertura.*señal/.test(t))return 'roja';                   // apertura de señales
   // Prioridad 2 (amarillo flúor): catenaria y su equipamiento eléctrico
   if(/catenaria/.test(t)||/pantografo|pantografos|enredo/.test(t)||/suspensor|triangulo|triangulos|postacion/.test(t)||/2300\s?v|\b3\s?kv|3000\s?v/.test(t)||/fibra.*optica|\bfo[as]?\b|\bf\.?o\.?\b/.test(t))return 'caten';
-  // Prioridad 4 (morado): confinamiento
-  if(/confinamiento|malla/.test(t))return 'confin';
+  // Prioridad 4 (dorado): confinamiento -> se unifica con falla de vía
+  if(/confinamiento|malla/.test(t))return 'via';
   // Prioridad 3 (rosado): señalización + CV (circuito de vía). CV va aquí, no en vía.
   if(/senalizacion|\bsenal\b|circuito.*via|\bcv\b|\bc\.?\s?v\.?\b/.test(t))return 'senal';
   // Prioridad 5 (amarillo oscuro): fallas de vía
@@ -1519,7 +1562,7 @@ function lineFromRow(r){
   if(/central|lcs|tronc|alameda.?chill/.test(hay))return _LINE_IDS.includes('trunk')?'trunk':null;
   return null;
 }
-const _CRITRANK={roja:0,caten:1,senal:2,confin:3,via:4,amar:5,mant:6};
+const _CRITRANK={roja:0,aguja:1,caten:2,senal:3,via:4,amar:5,mant:6};
 function refreshStatusExtra(){
   if(!LYR.extra)return;LYR.extra.clearLayers();if(!HAS_STATUS)return;
   // agrupar por ubicación (~11 m) para no saturar: un marcador por punto
@@ -1535,12 +1578,13 @@ function refreshStatusExtra(){
     const isz=critIconSize(worst);
     const m=L.marker([g.lat,g.lng],{icon:L.divIcon({className:'',html:'<div class="cxhit">'+critVisual(worst)+'</div>',iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:550});
     const f0=g.faults[0],ref=f0.ref||f0.nombre;
-    const tip=g.faults.length>1?(esc(ref)+' · '+g.faults.length+' averías'):(esc(f0.nombre)+(f0.pkExact&&f0.km!=null&&f0.km!==''?(' · PK '+esc(f0.km)):'')+' · '+(f0.estado==='falla'?'EN FALLA':'MANTENCIÓN')+(f0.ot?(' · '+esc(f0.ot)):''));
+    const tip=g.faults.length>1?(esc(ref)+' · '+g.faults.length+' averías'):(esc(f0.nombre)+(f0.pkExact&&f0.km!=null&&f0.km!==''?(' · PK '+esc(f0.km)):'')+' · '+(f0.estado==='falla'?'EN FALLA':'SOLICITUD')+(f0.ot?(' · '+esc(f0.ot)):''));
     m.bindTooltip(tip,{className:'cx-tip',direction:'top',offset:[0,-8]});
     m.on('click',()=>openFichaGroup(g));LYR.extra.addLayer(m);
   });}
-const _CRITMETA={roja:['#ff0000','Crítica (aguja/barrera)'],caten:['#eaff00','Catenaria / FO'],senal:['#ff4fa3','Señalización / CV'],confin:['#5a2d82','Confinamiento'],via:['#c19a00','Falla de vía'],amar:['#949ca3','Otra falla'],mant:['#949ca3','Mantención']};
-function openFichaGroup(g){
+const _CRITMETA={roja:['#ff0000','Crítica'],aguja:['#9b30ff','Aguja'],caten:['#eaff00','Catenaria / FO'],senal:['#ff4fa3','Señalización / CV'],via:['#c19a00','Falla de vía'],amar:['#949ca3','Otra falla'],mant:['#949ca3','Solicitud']};
+function openFichaGroup(g,fallback,fallbackKind){
+  CUR_SEL={kind:'group',lat:g.lat,lng:g.lng,fallback:fallback||null,fallbackKind:fallbackKind||null};
   const ref=g.faults[0].ref||g.faults[0].nombre||'Punto en falla';
   const kmv=g.faults[0].km;
   const rows=g.faults.slice().sort((a,b)=>{const ca=a.estado==='mantencion'?'mant':(a.crit||'amar'),cb=b.estado==='mantencion'?'mant':(b.crit||'amar');return _CRITRANK[ca]-_CRITRANK[cb];}).map(s=>{
@@ -1618,6 +1662,7 @@ function applyFracttalStatuses(rows,reset){
   });
   STATUS_SINUBIC=sinUbic;
   HAS_STATUS=true;updateStatusCounts();if(MAP){refreshCx(MAP.getZoom());refreshStatusExtra();}
+  refreshOpenFicha();
   return applied;
 }
 function parseCSVLine(line,sep){
@@ -1675,20 +1720,20 @@ function clearStatus(){STATUS={};HAS_STATUS=false;STATUS_FILTER='todos';setLive(
   $$('.opc').forEach(b=>b.classList.toggle('on',b.dataset.f==='todos'));updateStatusCounts();if(MAP)refreshCx(MAP.getZoom());}
 function matchFilter(s){const f=STATUS_FILTER;
   if(f==='roja')return s.estado==='falla'&&s.crit==='roja';
+  if(f==='aguja')return s.estado==='falla'&&s.crit==='aguja';
   if(f==='caten')return s.estado==='falla'&&s.crit==='caten';
   if(f==='senal')return s.estado==='falla'&&s.crit==='senal';
-  if(f==='confin')return s.estado==='falla'&&s.crit==='confin';
   if(f==='via')return s.estado==='falla'&&s.crit==='via';
   if(f==='falla')return s.estado==='falla'&&(s.crit||'amar')==='amar';
   return s.estado===f;}
 function setStatusFilter(f){STATUS_FILTER=f;$$('.opc').forEach(b=>b.classList.toggle('on',b.dataset.f===f));if(MAP)refreshCx(MAP.getZoom());}
 function updateStatusCounts(){
-  const tot=RMcx.length;let roja=0,caten=0,senal=0,confin=0,via=0,falla=0,mant=0;
-  const bump=s=>{if(s.estado==='falla'){const k=s.crit||'amar';if(k==='roja')roja++;else if(k==='caten')caten++;else if(k==='senal')senal++;else if(k==='confin')confin++;else if(k==='via')via++;else falla++;}else if(s.estado==='mantencion')mant++;};
+  const tot=RMcx.length;let roja=0,aguja=0,caten=0,senal=0,via=0,falla=0,mant=0;
+  const bump=s=>{if(s.estado==='falla'){const k=s.crit||'amar';if(k==='roja')roja++;else if(k==='aguja')aguja++;else if(k==='caten')caten++;else if(k==='senal')senal++;else if(k==='via')via++;else falla++;}else if(s.estado==='mantencion')mant++;};
   if(HAS_STATUS){RMcx.forEach(c=>bump(statusOf(c)));(STATUS_EXTRA||[]).forEach(bump);}
-  const op=HAS_STATUS?Math.max(0,tot-roja-caten-senal-confin-via-falla-mant):tot;
+  const op=HAS_STATUS?Math.max(0,tot-roja-aguja-caten-senal-via-falla-mant):tot;
   const set=(id,v)=>{const el=$(id);if(el)el.textContent=v;};
-  set('#cnt-todos',tot);set('#cnt-op',HAS_STATUS?op:'—');set('#cnt-roja',HAS_STATUS?roja:'—');set('#cnt-caten',HAS_STATUS?caten:'—');set('#cnt-senal',HAS_STATUS?senal:'—');set('#cnt-confin',HAS_STATUS?confin:'—');set('#cnt-via',HAS_STATUS?via:'—');set('#cnt-falla',HAS_STATUS?falla:'—');set('#cnt-mant',HAS_STATUS?mant:'—');
+  set('#cnt-todos',tot);set('#cnt-op',HAS_STATUS?op:'—');set('#cnt-roja',HAS_STATUS?roja:'—');set('#cnt-aguja',HAS_STATUS?aguja:'—');set('#cnt-caten',HAS_STATUS?caten:'—');set('#cnt-senal',HAS_STATUS?senal:'—');set('#cnt-via',HAS_STATUS?via:'—');set('#cnt-falla',HAS_STATUS?falla:'—');set('#cnt-mant',HAS_STATUS?mant:'—');
 }
 function setLive(state){const el=$('#livetag');if(!el)return;el.className='live '+state;}
 function connectFeed(url,everyMs){
@@ -2002,12 +2047,12 @@ function buildSections(){
           <button class="opc on" data-f="todos" onclick="setStatusFilter('todos')"><i style="background:#7fd3ff"></i>Todos <b id="cnt-todos">—</b></button>
           <button class="opc" data-f="operativo" onclick="setStatusFilter('operativo')"><i style="background:#43d17f"></i>Operativos <b id="cnt-op">—</b></button>
           <button class="opc" data-f="roja" onclick="setStatusFilter('roja')"><i style="background:#ff0000"></i>Críticas <b id="cnt-roja">—</b></button>
+          <button class="opc" data-f="aguja" onclick="setStatusFilter('aguja')"><i style="background:#9b30ff"></i>Aguja <b id="cnt-aguja">—</b></button>
           <button class="opc" data-f="caten" onclick="setStatusFilter('caten')"><i style="background:#eaff00"></i>Catenaria/FO <b id="cnt-caten">—</b></button>
           <button class="opc" data-f="senal" onclick="setStatusFilter('senal')"><i style="background:#ff4fa3"></i>Señalización/CV <b id="cnt-senal">—</b></button>
-          <button class="opc" data-f="confin" onclick="setStatusFilter('confin')"><i style="background:#5a2d82;border-radius:2px;position:relative" title="reja/confinamiento"></i>Confinamiento <b id="cnt-confin">—</b></button>
           <button class="opc" data-f="via" onclick="setStatusFilter('via')"><i style="background:#c19a00"></i>Fallas de vía <b id="cnt-via">—</b></button>
           <button class="opc" data-f="falla" onclick="setStatusFilter('falla')"><i style="background:#949ca3"></i>Otras fallas <b id="cnt-falla">—</b></button>
-          <button class="opc" data-f="mantencion" onclick="setStatusFilter('mantencion')"><i style="background:#949ca3;opacity:.7"></i>Mantención <b id="cnt-mant">—</b></button>
+          <button class="opc" data-f="mantencion" onclick="setStatusFilter('mantencion')"><i style="background:#949ca3;opacity:.7"></i>Solicitudes <b id="cnt-mant">—</b></button>
         </div>
         <div class="opbtns">
           <label class="opbtn" title="Cargar órdenes de trabajo exportadas de Fracttal (JSON o CSV)">↑ Importar OT<input type="file" id="otfile" accept=".json,.csv,.txt" hidden onchange="if(this.files[0])importStatusFile(this.files[0])"></label>
