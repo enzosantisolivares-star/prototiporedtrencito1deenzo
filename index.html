@@ -1700,6 +1700,16 @@ function applyFracttalStatuses(rows,reset){
       if(lineId){
         let p=bestP||pkToLatLng(lineId,pk);
         if(p){
+          // Si el punto interpolado cae muy cerca (<300m) de un cruce/PaN real ya existente en esa
+          // línea, se adjunta la falla directo a ese cruce en vez de crear un marcador nuevo al lado
+          // (evita el punto duplicado: uno verde "operativo" + otro con la falla, superpuestos).
+          let nearCruce=null,nearD=300;
+          DATA.cruces.forEach(cc=>{
+            if(cc.lat==null||cc.line!==lineId)return;
+            const d=_hav(p,[cc.lat,cc.lng]);
+            if(d<nearD){nearD=d;nearCruce=cc;}
+          });
+          if(nearCruce){STATUS[cxKey(nearCruce)]=meta;applied++;return;}
           const near=(bestHit?(bestHit.obj.nombre||bestHit.obj.nombre_libro):(hits&&hits.length?(hits[0].obj.nombre||hits[0].obj.nombre_libro):''))||'';
           STATUS_EXTRA.push(Object.assign({lat:p[0],lng:p[1],nombre:raw,km:Math.round(pk*1000)/1000,line:lineId,pkExact:true,ref:near},meta));
           applied++;return;
