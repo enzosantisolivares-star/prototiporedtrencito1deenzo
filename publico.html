@@ -1309,7 +1309,7 @@ function buildMap(){
     return L.point(this._container.offsetWidth-(e.clientY-r.top), e.clientX-r.left);
   };
   setTimeout(()=>{MAP.invalidateSize();updateLOD();},120);
-  try{connectFeed(FEED_URL,60000);}catch(e){console.warn('feed init',e);}
+  try{connectFeed(FEED_URL,30000);}catch(e){console.warn('feed init',e);}
 }
 function updateLOD(){
   const z=MAP.getZoom();const zi=$('#zinfo');if(zi)zi.textContent='Zoom '+z.toFixed(1);
@@ -1352,7 +1352,7 @@ function refreshCx(z){
     let m;
     if(HAS_STATUS&&est==='falla'){const cl=statusOf(c).crit||'amar';const isz=critIconSize(cl);m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:critIconHTML(cl),iconSize:isz,iconAnchor:[isz[0]/2,isz[1]/2]}),zIndexOffset:cl==='roja'?700:cl==='aguja'?690:cl==='caten'?680:cl==='senal'?665:cl==='via'?645:600});}
     else if(HAS_STATUS&&est==='mantencion')m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:'<div class="cxpulse mant"></div>',iconSize:[12,12],iconAnchor:[6,6]}),zIndexOffset:400});
-    else{const col=HAS_STATUS?'#43d17f':cxColor(c);m=L.circleMarker([c.lat,c.lng],{radius:named(c)?5:4,color:'#06121d',weight:1.3,fillColor:col,fillOpacity:named(c)?1:.82});}
+    else{const col=HAS_STATUS?'#43d17f':cxColor(c);m=L.circleMarker([c.lat,c.lng],{radius:named(c)?6:5,color:'#06121d',weight:1.3,fillColor:col,fillOpacity:named(c)?1:.82});}
     const stx=HAS_STATUS?(est==='falla'?' · EN FALLA':est==='mantencion'?' · SOLICITUD':' · operativo'):'';
     m.bindTooltip(`${esc(c.km)} · ${esc(c.nombre||c.nombre_libro||'PaN')}${stx}`,{className:'cx-tip',direction:'top',offset:[0,-8]});
     m.on('click',()=>openFicha(c));
@@ -1526,7 +1526,7 @@ function critLevel(txt){
   if(/\baguja/.test(t)||/\bag\b|\bag\d|\bag[-_]/.test(t))return 'aguja';
   // Prioridad 1 (rojo): eventos críticos por su severidad, se evalúan primero
   if(/enclavamiento/.test(t))return 'roja';
-  if(/barrera|\bpluma\b/.test(t))return 'roja';
+  if(/barrera|\bplumas?\b/.test(t))return 'roja';
   if(/corte.*fibra|fibra.*optica.*cort|corte.*\bfo\b|\bfo\b.*cort/.test(t))return 'roja';        // corte de fibra óptica
   if(/perdida.*comunicac|sin.*comunicac|falla.*comunicac|caida.*comunicac/.test(t))return 'roja'; // pérdida de comunicaciones
   if(/corte.*catenaria|catenaria.*cortad/.test(t))return 'roja';                                   // corte de catenaria
@@ -1583,7 +1583,7 @@ function buildPointIndex(){const idx={};const STOP={'de':1,'del':1,'la':1,'el':1
     if(ke&&ke.length>2)(idx[ke]=idx[ke]||[]).push({obj,kind,line});
     if(kl&&kl!==ke&&kl.length>2)(idx[kl]=idx[kl]||[]).push({obj,kind,line});
     // además, indexar por cada palabra significativa (>3 letras, no stopword) para nombres compuestos
-    kl.split(/\s+/).forEach(w=>{if(w.length>3&&!STOP[w]&&w!==ke&&w!==kl)(idx[w]=idx[w]||[]).push({obj,kind,line});});};
+    kl.split(/\s+/).forEach(w=>{if(w.length>3&&!STOP[w]&&w!==ke&&w!==kl)(idx[w]=idx[w]||[]).push({obj,kind,line,word:true});});};
   DATA.cruces.forEach(c=>{if(c.lat!=null){add(c.nombre,c,'cruce',c.line);if(c.nombre_libro)add(c.nombre_libro,c,'cruce',c.line);}});
   DATA.geo.lines.forEach(L=>L.stations.forEach(s=>{if(s.lat!=null)add(s.nombre,s,'est',L.id);}));
   (DATA.ssee_lt||[]).forEach(e=>{if(e.lat!=null)add(e.nombre,e,'infra',e.line||null);});
@@ -1661,6 +1661,7 @@ function applyFracttalStatuses(rows,reset){
         const cand=KS.filter(K=>K.endsWith(' '+k));
         if(cand.length===1){hits=PIDX[cand[0]];break;}
       }}
+    if(hits&&hits.length>1){const exactHits=hits.filter(h=>!h.word);if(exactHits.length)hits=exactHits;}
     // ---- ubicación por PK exacto (si hay PK y podemos determinar la línea) ----
     if(pk!=null){
       let lineId=null,bestHit=null,bestP=null;
@@ -2111,7 +2112,7 @@ function buildSections(){
         </div>
         <div class="opbtns">
           <label class="opbtn" title="Cargar órdenes de trabajo exportadas de Fracttal (JSON o CSV)">↑ Importar OT<input type="file" id="otfile" accept=".json,.csv,.txt" hidden onchange="if(this.files[0])importStatusFile(this.files[0])"></label>
-          <button class="opbtn" onclick="connectFeed(FEED_URL,60000)">↻ Recargar feed</button>
+          <button class="opbtn" onclick="connectFeed(FEED_URL,30000)">↻ Recargar feed</button>
           <button class="opbtn" onclick="clearStatus()">Limpiar</button>
         </div>
         <div class="opinfra">
