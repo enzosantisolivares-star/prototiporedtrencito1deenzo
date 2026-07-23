@@ -734,8 +734,8 @@ nav.side button{width:100%;text-align:left;border:none;background:none;color:var
 nav.side button:hover{background:var(--panel2)}
 nav.side button.active{background:color-mix(in srgb,var(--efe) 13%,transparent);color:var(--efe-d);font-weight:600}
 nav.side button .cnt{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--chip);padding:1px 6px;border-radius:20px}
-main{padding:22px 26px 80px;min-width:0;max-width:1180px}
-#sec-mapa{max-width:none;margin-right:-26px;margin-left:-26px;padding:0 26px}
+main{padding:22px 26px 80px;min-width:0;max-width:none}
+#sec-mapa{max-width:none;margin:-22px -26px -80px;padding:0}
 #sec-mapa .title,#sec-mapa .lead{padding-left:0}
 .sec{display:none}.sec.show{display:block;animation:fade .18s ease}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -848,8 +848,8 @@ mark{background:color-mix(in srgb,var(--amber) 35%,transparent);color:inherit;bo
 .menutog{display:none}
 
 /* ---- MAPA (mapa real, estilo Google Earth) ---- */
-.mapstage{position:relative;z-index:0;border-radius:16px;overflow:hidden;height:clamp(520px,76vh,940px);min-height:460px;
-  background:radial-gradient(135% 95% at 50% -10%,#103a5c 0%,#0a2236 48%,#06121d 100%);box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 0 0 1px rgba(120,180,230,.16)}
+.mapstage{position:relative;z-index:0;border-radius:0;overflow:hidden;height:calc(100vh - 78px);min-height:460px;
+  background:radial-gradient(135% 95% at 50% -10%,#103a5c 0%,#0a2236 48%,#06121d 100%);box-shadow:inset 0 0 0 1px rgba(120,180,230,.16)}
 .mapstage.full{position:fixed;inset:0;z-index:300;height:100vh!important;max-height:none;border-radius:0}
 .mapstage:fullscreen,.mapstage:-webkit-full-screen{width:100vw;height:100vh;max-height:none;border-radius:0}
 .mapstage.horiz #leafmap{will-change:transform}
