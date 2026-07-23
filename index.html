@@ -1644,6 +1644,7 @@ function openFichaGroup(g,fallback,fallbackKind){
 function openFichaExtra(s){const pc={nombre:s.nombre,km:s.km||'',lat:s.lat,lng:s.lng,red:s.red||'',line:s.line||'',_extra:true};STATUS[cxKey(pc)]={estado:s.estado,ot:s.ot,desc:s.desc,prioridad:s.prioridad,fecha:s.fecha,crit:s.crit,pkExact:s.pkExact,ref:s.ref};openFicha(pc);}
 function parseFechaFlex(s){
   s=String(s).trim(); if(!s)return null;
+  if(/^\d{4,6}$/.test(s)){const dt=new Date(Date.UTC(1899,11,30)+Number(s)*86400000);return isNaN(dt)?null:dt;}
   let m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
   if(m){let d=+m[1],mo=+m[2],y=+m[3];if(y<100)y+=2000;const dt=new Date(y,mo-1,d);return isNaN(dt)?null:dt;}
   m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
