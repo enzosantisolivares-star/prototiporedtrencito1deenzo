@@ -1721,6 +1721,11 @@ function applyFracttalStatuses(rows,reset){
     let targets=hits;
     if(pk!=null&&hits.length>1){const close=hits.filter(h=>Math.abs((parseFloat(String(h.obj.km||h.obj.pk).replace(',','.'))||1e9)-pk)<1.5);if(close.length)targets=close;}
     targets.slice(0,1).forEach(h=>{
+      // Si el punto encontrado (sin PK en el texto) es un cruce/PaN real, adjuntar la falla
+      // directo a ese cruce en vez de crear un punto nuevo al lado (evita duplicados, ej. Conavicoop).
+      if(h.kind==='cruce'&&h.obj&&h.obj.lat!=null){
+        STATUS[cxKey(h.obj)]=meta;applied++;return;
+      }
       let flat=h.obj.lat,flng=h.obj.lng;
       const sn=_snapNearestLine(flat,flng,3000); if(sn){flat=sn[0];flng=sn[1];}
       STATUS_EXTRA.push(Object.assign({lat:flat,lng:flng,nombre:raw,km:h.obj.km||h.obj.pk||'',line:h.obj.line,ref:h.obj.nombre||h.obj.nombre_libro||raw},meta));
