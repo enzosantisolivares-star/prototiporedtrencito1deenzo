@@ -947,7 +947,8 @@ nav.side{z-index:120}
 .legend .lk{display:flex;align-items:center;gap:6px}
 .legend .lk i{width:10px;height:10px;border-radius:50%;display:inline-block}
 /* panel operativo */
-.oppanel{left:14px;bottom:14px;padding:15px 16px;width:262px;max-width:calc(100% - 20px);overflow:hidden;color:#cfe2f1;transition:padding .25s ease}
+.oppanel{left:14px;bottom:14px;padding:15px 16px;width:262px;max-width:calc(100% - 20px);overflow:hidden;color:#cfe2f1;transition:padding .25s ease,transform .25s ease,opacity .2s ease}
+.oppanel.autohide-mobile{transform:translateY(160%);opacity:0;pointer-events:none}
 .oppanel.collapsed{max-height:48px;overflow:hidden;padding:15px 16px}
 .ophead{cursor:pointer}
 .ophead .toggle{margin-left:auto;color:#8aa6bd;transition:transform .2s;flex:none}
@@ -1023,7 +1024,7 @@ nav.side{z-index:120}
 .cxcard .df{margin-top:11px}
 .cxcard .k{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:#7fa6c4;font-weight:700;font-family:var(--disp)}
 .cxcard .v{color:#eaf3fb;font-size:14px;margin-top:2px;line-height:1.4}
-@media (max-width:760px){.mapstage{height:clamp(420px,72vh,640px)}.divchips{margin-left:0}.mapsearch{max-width:none}
+@media (max-width:760px){.mapstage{height:calc(100dvh - 78px)}.divchips{margin-left:0}.mapsearch{max-width:none}
   .cxcard{left:8px;right:8px;top:auto;bottom:8px;width:auto;max-height:44vh;border-radius:14px 14px 8px 8px;transform:translateY(115%)}
   .cxcard.show{transform:none}
   .cxcard .ch{padding:10px 13px 7px}
@@ -1309,6 +1310,18 @@ function buildMap(){
     return L.point(this._container.offsetWidth-(e.clientY-r.top), e.clientX-r.left);
   };
   setTimeout(()=>{MAP.invalidateSize();updateLOD();},120);
+  (function(){
+    const cx=document.getElementById('cxcard'),op=document.getElementById('oppanel');
+    if(cx&&op){
+      const sync=()=>{
+        if(!window.matchMedia('(max-width:760px)').matches){op.classList.remove('autohide-mobile');return;}
+        op.classList.toggle('autohide-mobile', cx.classList.contains('show'));
+      };
+      new MutationObserver(sync).observe(cx,{attributes:true,attributeFilter:['class']});
+      window.addEventListener('resize',sync);
+      sync();
+    }
+  })();
   try{connectFeed(FEED_URL,30000);}catch(e){console.warn('feed init',e);}
 }
 function updateLOD(){
@@ -1464,7 +1477,7 @@ function buildSearch(){
   function render(){
     res.innerHTML=cur.length?cur.map((it,i)=>`<div class="ri" data-i="${i}"><span class="ricon ${it.type}">${it.type==='cruce'?'PaN':it.type==='infra'?(it.e.se?'S/E':'LT'):'Est'}</span><span class="pk">${esc(it.pk)}</span><span class="rinfo"><span class="nm">${esc(it.nm)}</span><span class="sub">${esc(it.sub)}</span></span></div>`).join(''):'<div class="ri"><span class="sub" style="padding-left:6px">Sin coincidencias</span></div>';
     const wrapR=inp.closest('.mapsearch').getBoundingClientRect();
-    let leftPos=wrapR.left,widthPos=Math.max(wrapR.width,340);
+    let leftPos=wrapR.left,widthPos=Math.min(Math.max(wrapR.width,340),window.innerWidth-20);
     if(leftPos+widthPos>window.innerWidth-10)leftPos=Math.max(10,window.innerWidth-10-widthPos);
     res.style.left=leftPos+'px';res.style.top=(wrapR.bottom+6)+'px';res.style.width=widthPos+'px';
     res.classList.add('show');
