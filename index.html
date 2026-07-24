@@ -1315,7 +1315,7 @@ function buildMap(){
     if(cx&&op){
       const sync=()=>{
         if(!window.matchMedia('(max-width:760px)').matches){op.classList.remove('autohide-mobile');return;}
-        op.classList.toggle('autohide-mobile', cx.classList.contains('show'));
+        op.classList.toggle('autohide-mobile', cx.classList.contains('show') && !op.classList.contains('collapsed'));
       };
       new MutationObserver(sync).observe(cx,{attributes:true,attributeFilter:['class']});
       window.addEventListener('resize',sync);
